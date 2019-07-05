@@ -17,9 +17,12 @@ with open('README.md') as readme_file:
 with open('CHANGELOG.md') as history_file:
     history = history_file.read()
 
-# Installed by pip install common-utils-py
+# Installed by pip install ocean-utils
 # or pip install -e .
 install_requirements = [
+    'keeper-contracts',
+    'web3==4.5.0',
+    'requests==2.21.0',
 
 ]
 
@@ -37,7 +40,7 @@ test_requirements = [
     'tox',
 ]
 
-# Possibly required by developers of common-utils-py:
+# Possibly required by developers of ocean-utils:
 dev_requirements = [
     'bumpversion',
     'pkginfo',
@@ -51,7 +54,7 @@ docs_requirements = [
 ]
 
 packages = []
-for d, _, _ in os.walk('common_utils_py'):
+for d, _, _ in os.walk('ocean_utils'):
     if os.path.exists(join(d, '__init__.py')):
         packages.append(d.replace(os.path.sep, '.'))
 
@@ -76,8 +79,8 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     include_package_data=True,
-    keywords='common-utils-py',
-    name='common-utils-py',
+    keywords='ocean-utils',
+    name='ocean-utils',
     packages=packages,
     setup_requires=setup_requirements,
     test_suite='tests',
