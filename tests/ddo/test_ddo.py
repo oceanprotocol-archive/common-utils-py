@@ -7,8 +7,8 @@
 import json
 
 import pytest
+from keeper import Keeper
 
-from examples import ExampleConfig
 from ocean_utils.ddo.ddo import DDO
 from ocean_utils.ddo.public_key_base import (
     PUBLIC_KEY_STORE_TYPE_BASE64,
@@ -19,9 +19,6 @@ from ocean_utils.ddo.public_key_base import (
 from ocean_utils.ddo.public_key_hex import AUTHENTICATION_TYPE_HEX
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_ETHEREUM_ECDSA, PUBLIC_KEY_TYPE_RSA
 from ocean_utils.did import DID
-from ocean_utils.keeper.keeper import Keeper
-from ocean_utils.keeper.web3_provider import Web3Provider
-from ocean_utils.utils.utilities import get_public_key_from_address
 from tests.resources.helper_functions import get_publisher_account, get_resource_path
 from tests.resources.tiers import unit_test, e2e_test
 
@@ -149,11 +146,11 @@ def generate_sample_ddo():
     assert did
     ddo = DDO(did)
     assert ddo
-    config = ExampleConfig.get_config()
-    pub_acc = get_publisher_account(config)
+    pub_acc = get_publisher_account()
 
     # add a proof signed with the private key
-    ddo.add_proof('checksum', pub_acc, Keeper.get_instance())
+    signature = Keeper.sign_hash('checksum', pub_acc)
+    ddo.add_proof('checksum', pub_acc, signature)
 
     metadata = json.loads(TEST_METADATA)
     ddo.add_service("Metadata", f"http://myaquarius.org/api/v1/provider/assets/metadata/{did}",
@@ -177,8 +174,7 @@ def test_creating_ddo():
     ddo = DDO(did)
     assert ddo.did == did
 
-    config = ExampleConfig.get_config()
-    pub_acc = get_publisher_account(config)
+    pub_acc = get_publisher_account()
 
     ddo.add_service(TEST_SERVICE_TYPE, TEST_SERVICE_URL)
     assert len(ddo.services) == 1
@@ -208,8 +204,7 @@ def test_creating_ddo_from_scratch():
     ddo.assign_did(did)
     assert ddo.did == did
 
-    config = ExampleConfig.get_config()
-    pub_acc = get_publisher_account(config)
+    pub_acc = get_publisher_account()
 
     ddo.add_service(TEST_SERVICE_TYPE, TEST_SERVICE_URL)
 
@@ -218,10 +213,9 @@ def test_creating_ddo_from_scratch():
     ddo_text_proof = ddo.as_text()
     assert ddo_text_proof
 
-    config = ExampleConfig.get_config()
-    pub_acc = get_publisher_account(config)
+    pub_acc = get_publisher_account()
     assert not ddo.public_keys
-    ddo.add_public_key(did, get_public_key_from_address(Web3Provider.get_web3(), pub_acc))
+    ddo.add_public_key(did, pub_acc.address)
     assert len(ddo.public_keys) == 1
     assert ddo.get_public_key(0) == ddo.public_keys[0]
     with pytest.raises(IndexError):

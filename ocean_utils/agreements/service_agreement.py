@@ -6,7 +6,6 @@ from collections import namedtuple
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.ddo.service import Service
-from ocean_utils.keeper.utils import generate_multi_value_hash
 from ocean_utils.utils.utilities import generate_prefixed_id
 
 Agreement = namedtuple('Agreement', ('template', 'conditions'))
@@ -171,7 +170,7 @@ class ServiceAgreement(Service):
 
     @staticmethod
     def generate_service_agreement_hash(template_id, values_hash_list, timelocks, timeouts,
-                                        agreement_id):
+                                        agreement_id, hash_function):
         """
 
         :param template_id:
@@ -179,9 +178,10 @@ class ServiceAgreement(Service):
         :param timelocks:
         :param timeouts:
         :param agreement_id: id of the agreement, hex str
+        :param hash_function: reference to function that will be used to compute the hash (sha3 or similar)
         :return:
         """
-        return generate_multi_value_hash(
+        return hash_function(
             ['address', 'bytes32[]', 'uint256[]', 'uint256[]', 'bytes32'],
             [template_id, values_hash_list, timelocks, timeouts, agreement_id]
         )

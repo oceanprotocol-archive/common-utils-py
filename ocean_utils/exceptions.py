@@ -2,16 +2,9 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
 
+
 class OceanInvalidContractAddress(Exception):
     """Raised when an invalid address is passed to the contract loader."""
-
-
-class OceanKeeperContractsNotFound(Exception):
-    """Raised when is not possible to find the keeper contracts abi."""
-
-
-class OceanDIDNotFound(Exception):
-    """Raised when a requested DID or a DID in the chain cannot be found."""
 
 
 class OceanDIDUnknownValueType(Exception):
@@ -32,10 +25,6 @@ class OceanInvalidServiceAgreementSignature(Exception):
 
 class OceanServiceAgreementExists(Exception):
     """Raised when the SLA already exists."""
-
-
-class OceanInvalidTransaction(Exception):
-    """Raised when an on-chain transaction fail."""
 
 
 class OceanInitializeServiceAgreementError(Exception):

@@ -1,60 +1,58 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
+import os
 
 import pytest
 from web3 import HTTPProvider, Web3
+from keeper import Keeper
 
-from examples import ExampleConfig
 from ocean_utils.agreements.service_agreement import ServiceAgreement
-from ocean_utils.config_provider import ConfigProvider
+from ocean_utils.aquarius import AquariusProvider
+from ocean_utils.ddo.ddo import DDO
 from ocean_utils.did import DID
-from ocean_utils.keeper import Keeper
-from ocean_utils.keeper.web3_provider import Web3Provider
-from tests.resources.helper_functions import (get_consumer_account, get_consumer_ocean_instance,
-                                              get_ddo_sample, get_metadata, get_publisher_account,
-                                              get_publisher_ocean_instance, get_registered_ddo)
-from tests.resources.mocks.secret_store_mock import SecretStoreMock
-from tests.resources.tiers import should_run_test
-
-if should_run_test('e2e'):
-    ConfigProvider.set_config(ExampleConfig.get_config())
+from tests.resources.helper_functions import (
+    get_consumer_account,
+    get_ddo_sample,
+    get_metadata,
+    get_publisher_account
+)
 
 
-@pytest.fixture
-def secret_store():
-    return SecretStoreMock
+def get_aquarius_url():
+    if os.getenv('AQUARIUS_URL'):
+        return os.getenv('AQUARIUS_URL')
+    return 'http://localhost:5000'
 
 
-@pytest.fixture
-def publisher_ocean_instance():
-    return get_publisher_ocean_instance()
+def get_keeper_url():
+    if os.getenv('KEEPER_URL'):
+        return os.getenv('KEEPER_URL')
+    return 'http://localhost:8545'
 
 
 @pytest.fixture
-def consumer_ocean_instance():
-    return get_consumer_ocean_instance()
+def publisher_account():
+    return get_publisher_account()
 
 
 @pytest.fixture
-def publisher_ocean_instance_brizo():
-    return get_publisher_ocean_instance(use_brizo_mock=False)
+def consumer_account():
+    return get_consumer_account()
 
 
 @pytest.fixture
-def consumer_ocean_instance_brizo():
-    return get_consumer_ocean_instance(use_brizo_mock=False)
+def aquarius():
+    return AquariusProvider.get_aquarius(get_aquarius_url())
 
 
 @pytest.fixture
 def registered_ddo():
-    config = ExampleConfig.get_config()
-    return get_registered_ddo(get_publisher_ocean_instance(), get_publisher_account(config))
+    return DDO()
 
 
 @pytest.fixture
 def web3_instance():
-    config = ExampleConfig.get_config()
-    return Web3(HTTPProvider(config.keeper_url))
+    return Web3(HTTPProvider(get_keeper_url()))
 
 
 @pytest.fixture
@@ -64,9 +62,8 @@ def metadata():
 
 @pytest.fixture
 def setup_agreements_enviroment():
-    config = ConfigProvider.get_config()
-    consumer_acc = get_consumer_account(config)
-    publisher_acc = get_publisher_account(config)
+    consumer_acc = get_consumer_account()
+    publisher_acc = get_publisher_account()
     keeper = Keeper.get_instance()
 
     service_definition_id = 'Access'
@@ -77,7 +74,7 @@ def setup_agreements_enviroment():
     text_for_sha3 = ddo.metadata['base']['checksum'][2:]
     keeper.did_registry.register(
         ddo.did,
-        checksum=Web3Provider.get_web3().sha3(text=text_for_sha3),
+        checksum=Web3.sha3(text=text_for_sha3),
         url='aquarius:5000',
         account=publisher_acc,
         providers=None

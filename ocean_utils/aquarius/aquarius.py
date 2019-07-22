@@ -40,6 +40,10 @@ class Aquarius:
         self.requests_session = get_requests_session()
 
     @property
+    def root_url(self):
+        return self._base_url[:self._base_url.find('/api/v1/')]
+
+    @property
     def url(self):
         """Base URL of the aquarius instance."""
         return f'{self._base_url}/ddo'

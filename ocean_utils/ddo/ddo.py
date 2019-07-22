@@ -83,6 +83,12 @@ class DDO:
     def created(self):
         return self._created
 
+    @property
+    def encrypted_files(self):
+        """Return encryptedFiles field in the base metadata."""
+        files = self.metadata['base']['encryptedFiles']
+        return files
+
     def assign_did(self, did):
         if self._did:
             raise AssertionError('"did" is already set on this DDO instance.')
@@ -207,7 +213,7 @@ class DDO:
         if 'proof' in values:
             self._proof = values['proof']
 
-    def add_proof(self, text, publisher_account, keeper):
+    def add_proof(self, text, publisher_account, signature):
         """Add a proof to the DDO, based on the public_key id/index and signed with the private key
         add a static proof to the DDO, based on one of the public keys."""
 
@@ -215,7 +221,7 @@ class DDO:
             'type': PROOF_TYPE,
             'created': DDO._get_timestamp(),
             'creator': publisher_account.address,
-            'signatureValue': keeper.sign_hash(text, publisher_account),
+            'signatureValue': signature,
         }
 
     def is_proof_defined(self):

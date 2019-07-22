@@ -4,7 +4,7 @@
 from contextlib import contextmanager
 from inspect import signature
 
-from ocean_utils.keeper.web3_provider import Web3Provider
+from keeper.web3_provider import Web3Provider
 
 
 @contextmanager

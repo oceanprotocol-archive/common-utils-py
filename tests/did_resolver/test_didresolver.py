@@ -15,7 +15,7 @@ from ocean_utils.did_resolver.did_resolver import (
 from ocean_utils.exceptions import (
     OceanDIDNotFound,
 )
-from ocean_utils.keeper import Keeper
+from keeper import Keeper
 from tests.resources.helper_functions import get_resource_path
 from tests.resources.tiers import e2e_test
 
@@ -27,12 +27,10 @@ def keeper():
 
 
 @e2e_test
-def test_did_resolver_library(publisher_ocean_instance):
-    ocean = publisher_ocean_instance
-    register_account = ocean.main_account
+def test_did_resolver_library(publisher_account, aquarius):
     did_registry = keeper().did_registry
     checksum_test = Web3.sha3(text='checksum')
-    value_test = 'http://localhost:5000'
+    value_test = aquarius.root_url
 
     did_resolver = DIDResolver(keeper().did_registry)
 
@@ -40,8 +38,8 @@ def test_did_resolver_library(publisher_ocean_instance):
     assert sample_ddo_path.exists(), "{} does not exist!".format(sample_ddo_path)
     asset1 = DDO(json_filename=sample_ddo_path)
 
-    did_registry.register(asset1.did, checksum_test, url=value_test, account=register_account)
-    ocean.assets._get_aquarius().publish_asset_ddo(asset1)
+    did_registry.register(asset1.did, checksum_test, url=value_test, account=publisher_account)
+    aquarius.publish_asset_ddo(asset1)
 
     did_resolved = did_resolver.resolve(asset1.did)
     assert did_resolved
@@ -49,11 +47,12 @@ def test_did_resolver_library(publisher_ocean_instance):
 
     with pytest.raises(ValueError):
         did_resolver.resolve(asset1.asset_id)
-    ocean.assets._get_aquarius().retire_asset_ddo(asset1.did)
+
+    aquarius.retire_asset_ddo(asset1.did)
 
 
 @e2e_test
-def test_did_not_found(publisher_ocean_instance):
+def test_did_not_found():
     did_resolver = DIDResolver(keeper().did_registry)
     did_id = secrets.token_hex(32)
     did_id_bytes = Web3.toBytes(hexstr=did_id)
@@ -62,12 +61,11 @@ def test_did_not_found(publisher_ocean_instance):
 
 
 @e2e_test
-def test_get_resolve_url(publisher_ocean_instance):
-    ocean = publisher_ocean_instance
-    register_account = ocean.main_account
+def test_get_resolve_url(aquarius, publisher_account):
+    register_account = publisher_account
     did_registry = keeper().did_registry
     did = DID.did()
-    value_test = 'http://localhost:5000'
+    value_test = aquarius.root_url
     did_resolver = DIDResolver(keeper().did_registry)
     did_registry.register(did, b'test', url=value_test, account=register_account)
     did_id = did_to_id(did)
@@ -76,9 +74,8 @@ def test_get_resolve_url(publisher_ocean_instance):
 
 
 @e2e_test
-def test_get_resolve_multiple_urls(publisher_ocean_instance):
-    ocean = publisher_ocean_instance
-    register_account = ocean.main_account
+def test_get_resolve_multiple_urls(publisher_account):
+    register_account = publisher_account
     did_registry = keeper().did_registry
     did = DID.did()
     did2 = DID.did()
@@ -144,7 +141,7 @@ def test_get_resolve_multiple_urls(publisher_ocean_instance):
 
 
 @e2e_test
-def test_get_did_not_valid(publisher_ocean_instance):
+def test_get_did_not_valid():
     did_resolver = DIDResolver(keeper().did_registry)
     with pytest.raises(TypeError):
         did_resolver.get_resolve_url('not valid')

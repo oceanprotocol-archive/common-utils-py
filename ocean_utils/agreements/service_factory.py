@@ -7,7 +7,6 @@ from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.agreements.utils import get_sla_template_path
 from ocean_utils.ddo.service import Service
 from ocean_utils.did import did_to_id
-from ocean_utils.keeper import Keeper
 
 
 class ServiceDescriptor(object):
@@ -38,7 +37,8 @@ class ServiceDescriptor(object):
                 {'serviceEndpoint': service_endpoint})
 
     @staticmethod
-    def access_service_descriptor(price, purchase_endpoint, service_endpoint, timeout, template_id):
+    def access_service_descriptor(price, purchase_endpoint, service_endpoint, timeout,
+                                  template_id, reward_contract_address):
         """
         Access service descriptor.
 
@@ -47,15 +47,24 @@ class ServiceDescriptor(object):
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :param timeout: amount of time in seconds before the agreement expires, int
         :param template_id: id of the template use to create the service, str
+        :param reward_contract_address: hex str ethereum address of deployed reward condition
+            smart contract
         :return: Service descriptor.
         """
-        return (ServiceTypes.ASSET_ACCESS,
-                {'price': price, 'purchaseEndpoint': purchase_endpoint,
-                 'serviceEndpoint': service_endpoint,
-                 'timeout': timeout, 'templateId': template_id})
+        return (
+            ServiceTypes.ASSET_ACCESS,
+            {
+                'price': price,
+                'purchaseEndpoint': purchase_endpoint,
+                'serviceEndpoint': service_endpoint,
+                'timeout': timeout,
+                'templateId': template_id,
+                'rewardContractAddress': reward_contract_address}
+        )
 
     @staticmethod
-    def compute_service_descriptor(price, purchase_endpoint, service_endpoint, timeout):
+    def compute_service_descriptor(price, purchase_endpoint, service_endpoint,
+                                   timeout, reward_contract_address):
         """
         Compute service descriptor.
 
@@ -63,12 +72,16 @@ class ServiceDescriptor(object):
         :param purchase_endpoint: url of the service provider, str
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :param timeout: amount of time in seconds before the agreement expires, int
+        :param reward_contract_address: hex str ethereum address of deployed reward condition
+            smart contract
         :return: Service descriptor.
         """
         return (ServiceTypes.CLOUD_COMPUTE,
-                {'price': price, 'purchaseEndpoint': purchase_endpoint,
+                {'price': price,
+                 'purchaseEndpoint': purchase_endpoint,
                  'serviceEndpoint': service_endpoint,
-                 'timeout': timeout})
+                 'timeout': timeout,
+                 'rewardContractAddress': reward_contract_address})
 
 
 class ServiceFactory(object):
@@ -124,13 +137,14 @@ class ServiceFactory(object):
             return ServiceFactory.build_access_service(
                 did, kwargs['price'],
                 kwargs['purchaseEndpoint'], kwargs['serviceEndpoint'],
-                kwargs['timeout'], kwargs['templateId']
+                kwargs['timeout'], kwargs['templateId'], kwargs['rewardContractAddress']
             )
 
         elif service_type == ServiceTypes.CLOUD_COMPUTE:
             return ServiceFactory.build_compute_service(
                 did, kwargs['price'],
-                kwargs['purchaseEndpoint'], kwargs['serviceEndpoint'], kwargs['timeout']
+                kwargs['purchaseEndpoint'], kwargs['serviceEndpoint'],
+                kwargs['timeout'], kwargs['rewardContractAddress']
             )
 
         raise ValueError(f'Unknown service type {service_type}')
@@ -162,7 +176,8 @@ class ServiceFactory(object):
                        values={'service': 'SecretStore'})
 
     @staticmethod
-    def build_access_service(did, price, purchase_endpoint, service_endpoint, timeout, template_id):
+    def build_access_service(did, price, purchase_endpoint, service_endpoint,
+                             timeout, template_id, reward_contract_address):
         """
         Build the access service.
 
@@ -172,13 +187,15 @@ class ServiceFactory(object):
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :param timeout: amount of time in seconds before the agreement expires, int
         :param template_id: id of the template use to create the service, str
+        :param reward_contract_address: hex str ethereum address of deployed reward condition
+            smart contract
         :return: ServiceAgreement
         """
         # TODO fill all the possible mappings
         param_map = {
             '_documentId': did_to_id(did),
             '_amount': price,
-            '_rewardAddress': Keeper.get_instance().escrow_reward_condition.address,
+            '_rewardAddress': reward_contract_address
         }
         sla_template_path = get_sla_template_path()
         sla_template = ServiceAgreementTemplate.from_json_file(sla_template_path)
@@ -203,6 +220,7 @@ class ServiceFactory(object):
         return sa
 
     @staticmethod
-    def build_compute_service(did, price, purchase_endpoint, service_endpoint, timeout):
+    def build_compute_service(did, price, purchase_endpoint, service_endpoint,
+                              timeout, reward_contract_address):
         # TODO: implement this once the compute flow is ready
         return

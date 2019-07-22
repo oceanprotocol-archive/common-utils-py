@@ -1,10 +1,14 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
 
+from keeper.utils import generate_multi_value_hash
+from web3 import Web3
+
 from ocean_utils.agreements.service_agreement import ServiceAgreement
-from ocean_utils.keeper.web3_provider import Web3Provider
-from tests.resources.helper_functions import (get_ddo_sample,
-                                              log_event)
+from tests.resources.helper_functions import (
+    get_ddo_sample,
+    log_event
+)
 from tests.resources.tiers import e2e_test
 
 
@@ -127,12 +131,12 @@ def test_escrow_access_secret_store_template_flow(setup_agreements_enviroment):
 
 
 @e2e_test
-def test_agreement_hash(publisher_ocean_instance):
+def test_agreement_hash():
     """
     This test verifies generating agreement hash using fixed inputs and ddo example.
     This will make it easier to compare the hash generated from different languages.
     """
-    w3 = Web3Provider.get_web3()
+    w3 = Web3
     did = "did:op:cb36cf78d87f4ce4a784f17c2a4a694f19f3fbf05b814ac6b0b7197163888865"
     template_id = w3.toChecksumAddress("0x00bd138abd70e2f00903268f3db08f2d25677c9e")
     agreement_id = '0xf136d6fadecb48fdb2fc1fb420f5a5d1c32d22d9424e47ab9461556e058fefaa'
@@ -157,7 +161,8 @@ def test_agreement_hash(publisher_ocean_instance):
         (access_id, lock_id, escrow_id),
         sa.conditions_timelocks,
         sa.conditions_timeouts,
-        agreement_id
+        agreement_id,
+        generate_multi_value_hash
     )
     print('agreement hash: ', agreement_hash.hex())
     expected = '0x96732b390dacec0f19ad304ac176b3407968a0184d01b3262687fd23a3f0995e'
@@ -166,7 +171,7 @@ def test_agreement_hash(publisher_ocean_instance):
 
 
 def test_agreement():
-    template_id = Web3Provider.get_web3().toChecksumAddress('0x' + ('f' * 40))
+    template_id = Web3.toChecksumAddress('0x' + ('f' * 40))
     agreement_id = '0x' + ('e' * 64)
     access_id = '0x' + ('a' * 64)
     lock_id = '0x' + ('b' * 64)
@@ -177,10 +182,11 @@ def test_agreement():
         [access_id, lock_id, escrow_id],
         [0, 0, 0],
         [0, 0, 0],
-        agreement_id
+        agreement_id,
+        generate_multi_value_hash
     )
 
     print({signature})
-    assert signature == Web3Provider.get_web3().toBytes(
+    assert signature == Web3.toBytes(
         hexstr="0x67901517c18a3d23e05806fff7f04235cc8ae3b1f82345b8bfb3e4b02b5800c7"), \
         "The signature is not correct."
