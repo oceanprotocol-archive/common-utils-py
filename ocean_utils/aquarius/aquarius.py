@@ -10,7 +10,7 @@ import json
 import logging
 
 from ocean_utils.aquarius.exceptions import AquariusGenericError
-from ocean_utils.assets.asset import Asset
+from ocean_utils.ddo.ddo import DDO
 from ocean_utils.http_requests.requests_session import get_requests_session
 
 logger = logging.getLogger('aquarius')
@@ -99,7 +99,7 @@ class Aquarius:
             raise ValueError(response.decode('UTF-8'))
         if parsed_response is None:
             return {}
-        return Asset(dictionary=parsed_response)
+        return DDO(dictionary=parsed_response)
 
     def get_asset_metadata(self, did):
         """
