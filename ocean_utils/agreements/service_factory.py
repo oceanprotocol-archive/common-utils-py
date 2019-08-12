@@ -4,7 +4,7 @@
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
 from ocean_utils.agreements.service_types import ServiceTypes
-from ocean_utils.agreements.utils import get_sla_template_path
+from ocean_utils.agreements.utils import get_sla_template
 from ocean_utils.ddo.service import Service
 from ocean_utils.did import did_to_id
 
@@ -197,8 +197,8 @@ class ServiceFactory(object):
             '_amount': price,
             '_rewardAddress': reward_contract_address
         }
-        sla_template_path = get_sla_template_path()
-        sla_template = ServiceAgreementTemplate.from_json_file(sla_template_path)
+        sla_template_dict = get_sla_template()
+        sla_template = ServiceAgreementTemplate(template_json=sla_template_dict)
         sla_template.template_id = template_id
         conditions = sla_template.conditions[:]
         for cond in conditions:

@@ -1,4 +1,4 @@
-{
+ACCESS_SLA_TEMPLATE = {
   "type": "Access",
   "templateId": "",
   "name": "dataAssetAccessServiceAgreement",

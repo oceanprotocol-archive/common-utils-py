@@ -15,10 +15,6 @@ class OceanDIDAlreadyExist(Exception):
     """Raised when a requested DID is already published in OceanDB."""
 
 
-class OceanDIDNotFound(Exception):
-    """Raised when `did` is not found on-chain (not registered in the keeper block-chain network)"""
-
-
 class OceanInvalidMetadata(Exception):
     """Raised when some value in the metadata is invalid."""
 
