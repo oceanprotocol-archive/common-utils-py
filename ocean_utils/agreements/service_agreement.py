@@ -240,6 +240,7 @@ class ServiceAgreement(Service):
                 agreement_id, asset_id, consumer_address, publisher_address, keeper),
             self.conditions_timelocks,
             self.conditions_timeouts,
-            agreement_id
+            agreement_id,
+            keeper.generate_multi_value_hash
         )
         return agreement_hash
