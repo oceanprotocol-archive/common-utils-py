@@ -5,7 +5,7 @@ import json
 import os
 import pathlib
 
-from keeper.account import Account
+from ocean_keeper.utils import get_account
 
 from ocean_utils.ddo.ddo import DDO
 
@@ -22,13 +22,11 @@ def get_resource_path(dir_name, file_name):
 
 
 def get_publisher_account():
-    address = "0x00bd138abd70e2f00903268f3db08f2d25677c9e"
-    return Account(address, 'node0')
+    return get_account(0)
 
 
 def get_consumer_account():
-    address = "0x068ed00cf0441e4829d9784fcbe7b9e26d4bd8d0"
-    return Account(address, 'secret')
+    return get_account(1)
 
 
 def get_ddo_sample():

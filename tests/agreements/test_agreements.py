@@ -1,7 +1,7 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
 
-from keeper.utils import generate_multi_value_hash
+from ocean_keeper.utils import generate_multi_value_hash
 from web3 import Web3
 
 from ocean_utils.agreements.service_agreement import ServiceAgreement
