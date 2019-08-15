@@ -42,18 +42,6 @@ loggers:
     level: INFO
     handlers: [console]
     propagate: no
-  keeper:
-    level: INFO
-    handlers: [console]
-    propagate: no
-  keeper-events:
-    level: INFO
-    handlers: [console]
-    propagate: no
-  events:
-    level: INFO
-    handlers: [console]
-    propagate: no
 
 root:
   level: INFO

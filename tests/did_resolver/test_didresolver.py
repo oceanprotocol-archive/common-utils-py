@@ -12,10 +12,10 @@ from ocean_utils.did import DID, did_to_id
 from ocean_utils.did_resolver.did_resolver import (
     DIDResolver,
 )
-from ocean_utils.exceptions import (
+from ocean_keeper.exceptions import (
     OceanDIDNotFound,
 )
-from keeper import Keeper
+from ocean_keeper import Keeper
 from tests.resources.helper_functions import get_resource_path
 from tests.resources.tiers import e2e_test
 
@@ -38,7 +38,7 @@ def test_did_resolver_library(publisher_account, aquarius):
     assert sample_ddo_path.exists(), "{} does not exist!".format(sample_ddo_path)
     asset1 = DDO(json_filename=sample_ddo_path)
 
-    did_registry.register(asset1.did, checksum_test, url=value_test, account=publisher_account)
+    did_registry.register(asset1.asset_id, checksum_test, url=value_test, account=publisher_account)
     aquarius.publish_asset_ddo(asset1)
 
     did_resolved = did_resolver.resolve(asset1.did)
@@ -65,11 +65,11 @@ def test_get_resolve_url(aquarius, publisher_account):
     register_account = publisher_account
     did_registry = keeper().did_registry
     did = DID.did()
+    asset_id = did_to_id(did)
     value_test = aquarius.root_url
     did_resolver = DIDResolver(keeper().did_registry)
-    did_registry.register(did, b'test', url=value_test, account=register_account)
-    did_id = did_to_id(did)
-    url = did_resolver.get_resolve_url(Web3.toBytes(hexstr=did_id))
+    did_registry.register(asset_id, b'test', url=value_test, account=register_account)
+    url = did_resolver.get_resolve_url(Web3.toBytes(hexstr=asset_id))
     assert url == value_test
 
 
@@ -97,17 +97,6 @@ def test_get_resolve_multiple_urls(publisher_account):
     value_test8 = 'http://localhost:5007'
     value_test9 = 'http://localhost:5008'
     value_test10 = 'http://localhost:5009'
-    did_resolver = DIDResolver(keeper().did_registry)
-    did_registry.register(did, b'test', url=value_test, account=register_account)
-    did_registry.register(did2, b'test', url=value_test2, account=register_account)
-    did_registry.register(did3, b'test', url=value_test3, account=register_account)
-    did_registry.register(did4, b'test', url=value_test4, account=register_account)
-    did_registry.register(did5, b'test', url=value_test5, account=register_account)
-    did_registry.register(did6, b'test', url=value_test6, account=register_account)
-    did_registry.register(did7, b'test', url=value_test7, account=register_account)
-    did_registry.register(did8, b'test', url=value_test8, account=register_account)
-    did_registry.register(did9, b'test', url=value_test9, account=register_account)
-    did_registry.register(did10, b'test', url=value_test10, account=register_account)
     did_id = did_to_id(did)
     did_id2 = did_to_id(did2)
     did_id3 = did_to_id(did3)
@@ -118,6 +107,17 @@ def test_get_resolve_multiple_urls(publisher_account):
     did_id8 = did_to_id(did8)
     did_id9 = did_to_id(did9)
     did_id10 = did_to_id(did10)
+    did_resolver = DIDResolver(keeper().did_registry)
+    did_registry.register(did_id, b'test', url=value_test, account=register_account)
+    did_registry.register(did_id2, b'test', url=value_test2, account=register_account)
+    did_registry.register(did_id3, b'test', url=value_test3, account=register_account)
+    did_registry.register(did_id4, b'test', url=value_test4, account=register_account)
+    did_registry.register(did_id5, b'test', url=value_test5, account=register_account)
+    did_registry.register(did_id6, b'test', url=value_test6, account=register_account)
+    did_registry.register(did_id7, b'test', url=value_test7, account=register_account)
+    did_registry.register(did_id8, b'test', url=value_test8, account=register_account)
+    did_registry.register(did_id9, b'test', url=value_test9, account=register_account)
+    did_registry.register(did_id10, b'test', url=value_test10, account=register_account)
     url = did_resolver.get_resolve_url(Web3.toBytes(hexstr=did_id))
     url2 = did_resolver.get_resolve_url(Web3.toBytes(hexstr=did_id2))
     url3 = did_resolver.get_resolve_url(Web3.toBytes(hexstr=did_id3))

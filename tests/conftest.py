@@ -3,8 +3,10 @@
 import os
 
 import pytest
+from ocean_keeper.contract_handler import ContractHandler
+from ocean_keeper.web3_provider import Web3Provider
 from web3 import HTTPProvider, Web3
-from keeper import Keeper
+from ocean_keeper.keeper import Keeper
 
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.aquarius import AquariusProvider
@@ -28,6 +30,13 @@ def get_keeper_url():
     if os.getenv('KEEPER_URL'):
         return os.getenv('KEEPER_URL')
     return 'http://localhost:8545'
+
+
+@pytest.fixture(autouse=True)
+def setup_all():
+    Web3Provider.get_web3('http://localhost:8545')
+    ContractHandler.artifacts_path = os.path.expanduser('~/.ocean/keeper-contracts/artifacts')
+    Keeper.get_instance(artifacts_path=ContractHandler.artifacts_path)
 
 
 @pytest.fixture
@@ -73,7 +82,7 @@ def setup_agreements_enviroment():
     # Remove '0x' from the start of ddo.metadata['base']['checksum']
     text_for_sha3 = ddo.metadata['base']['checksum'][2:]
     keeper.did_registry.register(
-        ddo.did,
+        ddo.asset_id,
         checksum=Web3.sha3(text=text_for_sha3),
         url='aquarius:5000',
         account=publisher_acc,

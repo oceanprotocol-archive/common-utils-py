@@ -21,7 +21,6 @@ with open('CHANGELOG.md') as history_file:
 # or pip install -e .
 install_requirements = [
     'requests==2.21.0',
-
 ]
 
 # Required to run setup.py:

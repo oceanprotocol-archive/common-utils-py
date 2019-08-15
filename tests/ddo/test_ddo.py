@@ -7,7 +7,8 @@
 import json
 
 import pytest
-from keeper import Keeper
+from ocean_keeper import Keeper
+from web3 import Web3
 
 from ocean_utils.ddo.ddo import DDO
 from ocean_utils.ddo.public_key_base import (
@@ -149,7 +150,7 @@ def generate_sample_ddo():
     pub_acc = get_publisher_account()
 
     # add a proof signed with the private key
-    signature = Keeper.sign_hash('checksum', pub_acc)
+    signature = Keeper.sign_hash(Web3.sha3(text='checksum'), pub_acc)
     ddo.add_proof('checksum', pub_acc, signature)
 
     metadata = json.loads(TEST_METADATA)
@@ -182,7 +183,8 @@ def test_creating_ddo():
     ddo_text_no_proof = ddo.as_text()
     assert ddo_text_no_proof
 
-    ddo.add_proof('checksum', pub_acc, Keeper.get_instance())
+    signature = Keeper.sign_hash(Web3.sha3(text='checksum'), pub_acc)
+    ddo.add_proof('checksum', pub_acc, signature)
     ddo_text_proof = ddo.as_text()
 
     ddo = DDO(json_text=ddo_text_proof)
@@ -209,7 +211,8 @@ def test_creating_ddo_from_scratch():
     ddo.add_service(TEST_SERVICE_TYPE, TEST_SERVICE_URL)
 
     # add a proof to the first public_key/authentication
-    ddo.add_proof('checksum', pub_acc, Keeper.get_instance())
+    signature = Keeper.sign_hash(Web3.sha3(text='checksum'), pub_acc)
+    ddo.add_proof('checksum', pub_acc, signature)
     ddo_text_proof = ddo.as_text()
     assert ddo_text_proof
 

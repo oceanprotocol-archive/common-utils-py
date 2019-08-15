@@ -37,7 +37,7 @@ ddo.add_service('my-service-type', 'https://url-to-service')
 
 Add a static proof using the key index 0
 ```python
-ddo.add_proof(0, private_key)
+ddo.add_proof(0, private_key, signature)
 ```
 
 Return the DDO as a JSON text
