@@ -37,7 +37,7 @@ def test_did_resolver_library(publisher_account, aquarius):
     sample_ddo_path = get_resource_path('ddo', 'ddo_sample1.json')
     assert sample_ddo_path.exists(), "{} does not exist!".format(sample_ddo_path)
     asset1 = DDO(json_filename=sample_ddo_path)
-
+    asset1._did = DID.did()
     did_registry.register(asset1.asset_id, checksum_test, url=value_test, account=publisher_account)
     aquarius.publish_asset_ddo(asset1)
 
