@@ -3,10 +3,8 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
 
-import hashlib
 import json
 import logging
-from datetime import datetime
 
 from eth_utils import add_0x_prefix
 
@@ -14,6 +12,7 @@ from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.ddo.public_key_base import PublicKeyBase
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_ETHEREUM_ECDSA
 from ocean_utils.did import did_to_id, OCEAN_PREFIX
+from ocean_utils.utils.utilities import get_timestamp, checksum
 from .constants import DID_DDO_CONTEXT_URL, PROOF_TYPE
 from .public_key_rsa import PUBLIC_KEY_TYPE_RSA, PublicKeyRSA
 from .service import Service
@@ -36,7 +35,7 @@ class DDO:
         if created:
             self._created = created
         else:
-            self._created = DDO._get_timestamp()
+            self._created = get_timestamp()
 
         if not json_text and json_filename:
             with open(json_filename, 'r') as file_handle:
@@ -86,7 +85,7 @@ class DDO:
     @property
     def encrypted_files(self):
         """Return encryptedFiles field in the base metadata."""
-        files = self.metadata['base']['encryptedFiles']
+        files = self.metadata['main']['encryptedFiles']
         return files
 
     def assign_did(self, did):
@@ -127,7 +126,7 @@ class DDO:
 
         :param service_type: Service
         :param service_endpoint: Service endpoint, str
-        :param values: Python dict with serviceDefinitionId, templateId, serviceAgreementContract,
+        :param values: Python dict with index, templateId, serviceAgreementContract,
         list of conditions and purchase endpoint.
         """
         if isinstance(service_type, Service):
@@ -158,7 +157,7 @@ class DDO:
         :return: dict
         """
         if self._created is None:
-            self._created = DDO._get_timestamp()
+            self._created = get_timestamp()
 
         data = {
             '@context': DID_DDO_CONTEXT_URL,
@@ -213,20 +212,17 @@ class DDO:
         if 'proof' in values:
             self._proof = values['proof']
 
-    def add_proof(self, text, publisher_account, signature):
+    def add_proof(self, checksums, publisher_account, signature):
         """Add a proof to the DDO, based on the public_key id/index and signed with the private key
         add a static proof to the DDO, based on one of the public keys."""
-
         self._proof = {
             'type': PROOF_TYPE,
-            'created': DDO._get_timestamp(),
+            'created': get_timestamp(),
             'creator': publisher_account.address,
             'signatureValue': signature,
-        }
+            'checksum': checksums
 
-    def is_proof_defined(self):
-        """Return true if a static proof exists in this DDO."""
-        return self._proof is not None
+        }
 
     def get_public_key(self, key_id):
         """Key_id can be a string, or int. If int then the index in the list of keys."""
@@ -264,7 +260,7 @@ class DDO:
         :param service_id: Service id, str
         :return: Service
         """
-        service_id_key = 'serviceDefinitionId'
+        service_id_key = 'index'
         service_id = str(service_id)
         for service in self._services:
             if service_id_key in service.values and str(
@@ -335,11 +331,6 @@ class DDO:
         return authentication
 
     @staticmethod
-    def _get_timestamp():
-        """Return the current system timestamp."""
-        return f'{datetime.utcnow().replace(microsecond=0).isoformat()}Z'
-
-    @staticmethod
     def generate_checksum(did, metadata):
         """
         Generation of the hash for integrity checksum.
@@ -349,12 +340,12 @@ class DDO:
         :return: hex str, beginning with '0x'
         """
         files_checksum = ''
-        for file in metadata['base']['files']:
+        for file in metadata['main']['files']:
             if 'checksum' in file:
                 files_checksum = files_checksum + file['checksum']
-        hashstr = hashlib.sha3_256((files_checksum +
-                                    metadata['base']['name'] +
-                                    metadata['base']['author'] +
-                                    metadata['base']['license'] +
-                                    did).encode('UTF-8')).hexdigest()
+        hashstr = checksum((files_checksum +
+                            metadata['main']['name'] +
+                            metadata['main']['author'] +
+                            metadata['main']['license'] +
+                            did).encode('UTF-8')).hexdigest()
         return '0x' + hashstr

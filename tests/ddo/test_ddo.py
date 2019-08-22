@@ -21,7 +21,7 @@ from ocean_utils.ddo.public_key_hex import AUTHENTICATION_TYPE_HEX
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_ETHEREUM_ECDSA, PUBLIC_KEY_TYPE_RSA
 from ocean_utils.did import DID
 from tests.resources.helper_functions import get_publisher_account, get_resource_path
-from tests.resources.tiers import unit_test, e2e_test
+from tests.resources.tiers import e2e_test, unit_test
 
 public_key_store_types = [
     PUBLIC_KEY_STORE_TYPE_PEM,
@@ -35,19 +35,12 @@ TEST_SERVICE_URL = 'http://localhost:8005'
 
 TEST_METADATA = """
 {
-   "base": {
+   "main": {
      "name": "UK Weather information 2011",
      "type": "dataset",
-     "description": "Weather information of UK including temperature and humidity",
-     "size": "3.1gb",
      "dateCreated": "2012-10-10T17:00:000Z",
      "author": "Met Office",
      "license": "CC-BY",
-     "copyrightHolder": "Met Office",
-     "encoding": "UTF-8",
-     "compression": "zip",
-     "contentType": "text/csv",
-     "workExample": "423432fsd,51.509865,-0.118092,2011-01-01T10:55:11+00:00,7.2,68",
      "files": [
        {
          "url": "https://testocnfiles.blob.core.windows.net/testfiles/testzkp.pdf",
@@ -56,13 +49,6 @@ TEST_METADATA = """
          "resourceId": "access-log2018-02-13-15-17-29-18386C502CAEA932"
        }
      ],
-     "links": [
-       { "name": "Sample of Asset Data", "type": "sample", "url": "https://foo.com/sample.csv" },
-       { "name": "Data Format Definition", "type": "format", "AssetID": 
-       "4d517500da0acb0d65a716f61330969334630363ce4a6a9d39691026ac7908ea" }
-     ],
-     "inLanguage": "en",
-     "tags": ["weather", "uk", "2011", "temperature", "humidity"],
      "price": 10
    },
    "curation": {
@@ -87,40 +73,6 @@ TEST_METADATA = """
 """
 
 TEST_SERVICES = [
-    {"type": "OpenIdConnectVersion1.0Service",
-     "serviceEndpoint": "https://openid.example.com/"
-     },
-    {
-        "type": "CredentialRepositoryService",
-        "serviceEndpoint": "https://repository.example.com/service/8377464"
-    },
-    {
-        "type": "XdiService",
-        "serviceEndpoint": "https://xdi.example.com/8377464"
-    },
-    {
-        "type": "HubService",
-        "serviceEndpoint": "https://hub.example.com/.identity/did:op:0123456789abcdef/"
-    },
-    {
-        "type": "MessagingService",
-        "serviceEndpoint": "https://example.com/messages/8377464"
-    },
-    {
-        "type": "SocialWebInboxService",
-        "serviceEndpoint": "https://social.example.com/83hfh37dj",
-        "values": {
-            "description": "My public social inbox",
-            "spamCost": {
-                "amount": "0.50",
-                "currency": "USD"
-            }
-        }
-    },
-    {
-        "type": "BopsService",
-        "serviceEndpoint": "https://bops.example.com/enterprise/"
-    },
     {
         "type": "Consume",
         "serviceEndpoint": "http://mybrizo.org/api/v1/brizo/services/consume?pubKey=${"
@@ -128,7 +80,7 @@ TEST_SERVICES = [
     },
     {
         "type": "Compute",
-        "serviceDefinitionId": "1",
+        "index": "1",
         "serviceEndpoint": "http://mybrizo.org/api/v1/brizo/services/compute?pubKey=${"
                            "pubKey}&agreementId={agreementId}&algo={algo}&container={container}"
     },
@@ -136,7 +88,7 @@ TEST_SERVICES = [
         "type": "Access",
         "purchaseEndpoint": "service",
         "serviceEndpoint": "consume",
-        "serviceDefinitionId": "0",
+        "index": "0",
         "templateId": "0x00000",
     }
 ]
@@ -236,7 +188,7 @@ def test_creating_ddo_from_scratch():
 def test_create_auth_from_json():
     auth = {'publicKey': '0x00000', 'type': 'auth-type', 'nothing': ''}
     assert DDO.create_authentication_from_json(auth) == \
-        {'publicKey': '0x00000', 'type': 'auth-type'}
+           {'publicKey': '0x00000', 'type': 'auth-type'}
     with pytest.raises(ValueError):
         DDO.create_authentication_from_json({'type': 'auth-type'})
 
@@ -269,9 +221,9 @@ def test_load_ddo_json():
     sample_ddo_json_string = json.dumps(sample_ddo_json_dict)
 
     this_ddo = DDO(json_text=sample_ddo_json_string)
-    service = this_ddo.get_service('Metadata')
+    service = this_ddo.get_service('metadata')
     assert service
-    assert service.type == 'Metadata'
+    assert service.type == 'metadata'
     assert service.values['metadata']
 
 
@@ -311,8 +263,20 @@ def test_find_service():
 
     service = ddo.find_service_by_id('Access')
     assert service and service.type == 'Access', 'Failed to find service by id using service type.'
-    assert service.service_definition_id == '0', 'serviceDefinitionId not as expected.'
+    assert service.index == '0', 'index not as expected.'
 
     service = ddo.find_service_by_id('Compute')
     assert service and service.type == 'Compute', 'Failed to find service by id using service type.'
-    assert service.service_definition_id == '1', 'serviceDefinitionId not as expected.'
+    assert service.index == '1', 'index not as expected.'
+
+
+def test_create_ddo(metadata):
+    ddo = DDO()
+    ddo.add_service('metadata', metadata)
+    checksums = sorted()
+    for service in ddo.services:
+        checksums.append(service.index, service.attributes.main.checksum)
+    ddo.add_proof(checksums, '', Keeper.sign_hash(ddo.services, ''))
+    ddo.assign_did(DID.did(ddo.proof['checksum']))
+    ddo.add_authentication()
+    ddo.add_public_key()

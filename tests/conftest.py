@@ -79,8 +79,8 @@ def setup_agreements_enviroment():
 
     ddo = get_ddo_sample()
     ddo._did = DID.did()
-    # Remove '0x' from the start of ddo.metadata['base']['checksum']
-    text_for_sha3 = ddo.metadata['base']['checksum'][2:]
+    # Remove '0x' from the start of ddo.metadata['main']['checksum']
+    text_for_sha3 = ddo.metadata['main']['checksum'][2:]
     keeper.did_registry.register(
         ddo.asset_id,
         checksum=Web3.sha3(text=text_for_sha3),

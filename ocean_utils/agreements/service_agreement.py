@@ -13,7 +13,7 @@ Agreement = namedtuple('Agreement', ('template', 'conditions'))
 
 class ServiceAgreement(Service):
     """Class representing a Service Agreement."""
-    SERVICE_DEFINITION_ID = 'serviceDefinitionId'
+    SERVICE_INDEX = 'index'
     AGREEMENT_TEMPLATE = 'serviceAgreementTemplate'
     SERVICE_CONDITIONS = 'conditions'
     PURCHASE_ENDPOINT = 'purchaseEndpoint'
@@ -33,7 +33,7 @@ class ServiceAgreement(Service):
         self.service_agreement_template = service_agreement_template
 
         values_dict = {
-            ServiceAgreement.SERVICE_DEFINITION_ID: self.sa_definition_id,
+            ServiceAgreement.SERVICE_INDEX: self.sa_definition_id,
             ServiceAgreementTemplate.TEMPLATE_ID_KEY: self.template_id,
 
         }
@@ -161,7 +161,7 @@ class ServiceAgreement(Service):
         :return:
         """
         return cls(
-            service_dict[cls.SERVICE_DEFINITION_ID],
+            service_dict[cls.SERVICE_INDEX],
             ServiceAgreementTemplate(service_dict),
             service_dict.get(cls.SERVICE_ENDPOINT),
             service_dict.get(cls.PURCHASE_ENDPOINT),

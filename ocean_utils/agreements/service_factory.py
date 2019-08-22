@@ -37,13 +37,12 @@ class ServiceDescriptor(object):
                 {'serviceEndpoint': service_endpoint})
 
     @staticmethod
-    def access_service_descriptor(price, purchase_endpoint, service_endpoint, timeout,
+    def access_service_descriptor(price, service_endpoint, timeout,
                                   template_id, reward_contract_address):
         """
         Access service descriptor.
 
         :param price: Asset price, int
-        :param purchase_endpoint: url of the service provider, str
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :param timeout: amount of time in seconds before the agreement expires, int
         :param template_id: id of the template use to create the service, str
@@ -55,7 +54,6 @@ class ServiceDescriptor(object):
             ServiceTypes.ASSET_ACCESS,
             {
                 'price': price,
-                'purchaseEndpoint': purchase_endpoint,
                 'serviceEndpoint': service_endpoint,
                 'timeout': timeout,
                 'templateId': template_id,
@@ -63,13 +61,12 @@ class ServiceDescriptor(object):
         )
 
     @staticmethod
-    def compute_service_descriptor(price, purchase_endpoint, service_endpoint,
+    def compute_service_descriptor(price, service_endpoint,
                                    timeout, reward_contract_address):
         """
         Compute service descriptor.
 
         :param price: Asset price, int
-        :param purchase_endpoint: url of the service provider, str
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :param timeout: amount of time in seconds before the agreement expires, int
         :param reward_contract_address: hex str ethereum address of deployed reward condition
@@ -78,7 +75,6 @@ class ServiceDescriptor(object):
         """
         return (ServiceTypes.CLOUD_COMPUTE,
                 {'price': price,
-                 'purchaseEndpoint': purchase_endpoint,
                  'serviceEndpoint': service_endpoint,
                  'timeout': timeout,
                  'rewardContractAddress': reward_contract_address})
@@ -99,10 +95,10 @@ class ServiceFactory(object):
         :return: List of Services
         """
         services = []
-        sa_def_key = ServiceAgreement.SERVICE_DEFINITION_ID
+        sa_def_key = ServiceAgreement.SERVICE_INDEX
         for i, service_desc in enumerate(service_descriptors):
             service = ServiceFactory.build_service(service_desc, did)
-            # set serviceDefinitionId for each service
+            # set index for each service
             service.update_value(sa_def_key, str(i))
             services.append(service)
 

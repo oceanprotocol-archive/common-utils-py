@@ -6,8 +6,7 @@
 
 class ServiceTypes:
     """Types of Service allowed in ocean protocol DDO services."""
-    AUTHORIZATION = 'Authorization'
-    METADATA = 'Metadata'
-    ASSET_ACCESS = 'Access'
-    CLOUD_COMPUTE = 'Compute'
-    FITCHAIN_COMPUTE = 'FitchainCompute'
+    AUTHORIZATION = 'authorization'
+    METADATA = 'metadata'
+    ASSET_ACCESS = 'access'
+    CLOUD_COMPUTE = 'compute'

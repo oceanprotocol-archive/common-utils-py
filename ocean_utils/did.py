@@ -6,8 +6,7 @@ import re
 
 from eth_utils import remove_0x_prefix
 from web3 import Web3
-
-from ocean_utils.utils.utilities import generate_new_id
+from ocean_utils.utils.utilities import checksum
 
 OCEAN_PREFIX = 'did:op:'
 
@@ -16,7 +15,7 @@ class DID:
     """Class representing an asset DID."""
 
     @staticmethod
-    def did():
+    def did(seed):
         """
         Create a did.
 
@@ -25,7 +24,7 @@ class DID:
 
         :return: Asset did, str.
         """
-        return OCEAN_PREFIX + generate_new_id()
+        return OCEAN_PREFIX + remove_0x_prefix(checksum(seed))
 
 
 def did_parse(did):

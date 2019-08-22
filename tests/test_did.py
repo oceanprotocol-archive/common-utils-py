@@ -10,7 +10,7 @@ import pytest
 from web3 import Web3
 
 from ocean_utils.did import (DID, did_parse, did_to_id, did_to_id_bytes, id_to_did, is_did_valid,
-                          OCEAN_PREFIX)
+                             OCEAN_PREFIX)
 from tests.resources.tiers import e2e_test
 
 TEST_SERVICE_TYPE = 'ocean-meta-storage'
@@ -113,3 +113,18 @@ def test_did_to_bytes():
 
     with pytest.raises(TypeError):
         did_to_id_bytes(42)
+
+
+def test_create_did():
+    proof = {
+        "type": "DDOIntegritySignature",
+        "created": "2016-02-08T16:02:20Z",
+        "creator": "0x00Bd138aBD70e2F00903268F3Db08f2D25677C9e",
+        "signatureValue": "0xc9eeb2b8106e…6abfdc5d1192641b",
+        "checksum": {
+            "0": "0x52b5c93b82dd9e7ecc3d9fdf4755f7f69a54484941897dc517b4adfe3bbc3377",
+            "1": "0x999999952b5c93b82dd9e7ecc3d9fdf4755f7f69a54484941897dc517b4adfe3"
+        }
+    }
+    did = DID.did(proof['checksum'])
+    assert did == 'did:op:138fccf336883ae6312c9b8b375745a90be369454080e90985fb3e314ab0df25'

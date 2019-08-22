@@ -148,33 +148,3 @@ class ServiceAgreementCondition(object):
         :return:
         """
         return Web3.soliditySha3(self.param_types, self.param_values).hex()
-
-    @staticmethod
-    def example_dict():
-        return {
-            "name": "lockRewardCondition",
-            "timelock": 0,
-            "timeout": 0,
-            "contractName": "LockRewardCondition",
-            "functionName": "lockPayment",
-            "parameters": [
-                {
-                    "name": "_rewardAddress",
-                    "type": "address",
-                    "value": ""
-                }, {
-                    "name": "_amount",
-                    "type": "uint256",
-                    "value": "10"
-                }
-            ],
-            "events": [{
-                "name": "Fulfilled",
-                "actorType": "publisher",
-                "handler": {
-                    "moduleName": "lockRewardCondition",
-                    "functionName": "fulfillAccessSecretStoreCondition",
-                    "version": "0.1"
-                }
-            }]
-        }
