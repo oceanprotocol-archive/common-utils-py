@@ -19,10 +19,9 @@ TEST_SERVICE_URL = 'http://localhost:8005'
 
 @e2e_test
 def test_did():
-    assert DID.did().startswith(OCEAN_PREFIX)
-    assert len(DID.did()) - len(OCEAN_PREFIX) == 64
-    assert DID.did() != DID.did(), ''
-    _id = did_to_id(DID.did())
+    assert DID.did({"0": "0x123"}).startswith(OCEAN_PREFIX)
+    assert len(DID.did({"0": "0x123"})) - len(OCEAN_PREFIX) == 64
+    _id = did_to_id(DID.did({"0": "0x123"}))
     assert not _id.startswith('0x'), 'id portion of did should not have a 0x prefix.'
 
 
@@ -71,7 +70,7 @@ def test_id_to_did():
 
 
 def test_did_to_id():
-    did = DID.did()
+    did = DID.did({"0": "0x123"})
     _id = did_to_id(did)
     assert _id is not None and len(_id) == 64, ''
 

@@ -8,7 +8,6 @@
 
 import json
 import logging
-from collections import namedtuple
 
 # from ocean_commons.agreements.service_agreement import ServiceAgreement
 # from ocean_commons.agreements.service_types import ServiceTypes
@@ -20,11 +19,12 @@ class Service:
     """Service class to create validate service in a DDO."""
     SERVICE_ENDPOINT = 'serviceEndpoint'
 
-    def __init__(self, service_endpoint, service_type, values, did=None):
+    def __init__(self, service_endpoint, service_type, values, index=None, did=None):
         """Initialize Service instance."""
         self._service_endpoint = service_endpoint
         self._type = service_type
         self._did = did
+        self._index = index
 
         # assign the _values property to empty until they are used
         self._values = dict()
@@ -59,7 +59,7 @@ class Service:
 
         :return: str
         """
-        return self._values.get('index')
+        return self._index
 
     @property
     def service_endpoint(self):
@@ -70,13 +70,20 @@ class Service:
         """
         return self._service_endpoint
 
-    @property
     def values(self):
         """
 
         :return: array of values
         """
         return self._values.copy()
+
+    @property
+    def attributes(self):
+        return self._values['attributes']
+
+    @property
+    def main(self):
+        return self._values['attributes']['main']
 
     def update_value(self, name, value):
         """
@@ -97,10 +104,6 @@ class Service:
         """
         assert self._did is None, 'service did already set.'
         self._did = did
-
-    def is_valid(self):
-        """Return True if the sevice is valid."""
-        return self._service_endpoint is not None and self._type is not None
 
     def as_text(self, is_pretty=False):
         """Return the service as a JSON string."""

@@ -17,7 +17,6 @@ from ocean_utils.ddo.public_key_base import (
     PUBLIC_KEY_STORE_TYPE_HEX,
     PUBLIC_KEY_STORE_TYPE_PEM,
     PublicKeyBase)
-from ocean_utils.ddo.public_key_hex import AUTHENTICATION_TYPE_HEX
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_ETHEREUM_ECDSA, PUBLIC_KEY_TYPE_RSA
 from ocean_utils.did import DID
 from tests.resources.helper_functions import get_publisher_account, get_resource_path
@@ -74,28 +73,17 @@ TEST_METADATA = """
 
 TEST_SERVICES = [
     {
-        "type": "Consume",
-        "serviceEndpoint": "http://mybrizo.org/api/v1/brizo/services/consume?pubKey=${"
-                           "pubKey}&agreementId={agreementId}&url={url}"
-    },
-    {
-        "type": "Compute",
-        "index": "1",
-        "serviceEndpoint": "http://mybrizo.org/api/v1/brizo/services/compute?pubKey=${"
-                           "pubKey}&agreementId={agreementId}&algo={algo}&container={container}"
-    },
-    {
         "type": "Access",
         "purchaseEndpoint": "service",
         "serviceEndpoint": "consume",
-        "index": "0",
+        "index": "3",
         "templateId": "0x00000",
     }
 ]
 
 
 def generate_sample_ddo():
-    did = DID.did()
+    did = DID.did({"0":"0x1234"})
     assert did
     ddo = DDO(did)
     assert ddo
@@ -103,11 +91,11 @@ def generate_sample_ddo():
 
     # add a proof signed with the private key
     signature = Keeper.sign_hash(Web3.sha3(text='checksum'), pub_acc)
-    ddo.add_proof('checksum', pub_acc, signature)
+    ddo.add_proof('checksum', pub_acc)
 
     metadata = json.loads(TEST_METADATA)
-    ddo.add_service("Metadata", f"http://myaquarius.org/api/v1/provider/assets/metadata/{did}",
-                    values={'metadata': metadata})
+    ddo.add_service("metadata", f"http://myaquarius.org/api/v1/provider/assets/metadata/{did}",
+                    values={'metadata': metadata}, index=0)
     for test_service in TEST_SERVICES:
         if 'values' in test_service:
             values = test_service['values']
@@ -123,7 +111,7 @@ def generate_sample_ddo():
 
 @e2e_test
 def test_creating_ddo():
-    did = DID.did()
+    did = DID.did({"0":"0x123908123091283"})
     ddo = DDO(did)
     assert ddo.did == did
 
@@ -154,7 +142,7 @@ def test_creating_ddo_from_scratch():
     assert ddo.asset_id is None
     assert ddo.created is not None
 
-    did = DID.did()
+    did = DID.did({"0":"0x99999999999999999"})
     ddo.assign_did(did)
     assert ddo.did == did
 
@@ -180,7 +168,7 @@ def test_creating_ddo_from_scratch():
     assert ddo.get_public_key('0x32233') is None
 
     assert not ddo.authentications
-    ddo.add_authentication(did, AUTHENTICATION_TYPE_HEX)
+    ddo.add_authentication(did, '')
     assert len(ddo.authentications) == 1
 
 
@@ -224,7 +212,7 @@ def test_load_ddo_json():
     service = this_ddo.get_service('metadata')
     assert service
     assert service.type == 'metadata'
-    assert service.values['metadata']
+    assert service.values['attributes']
 
 
 @unit_test
@@ -238,45 +226,38 @@ def test_ddo_dict():
 
 
 @unit_test
-def test_generate_test_ddo_files(registered_ddo):
-    for index in range(1, 3):
-        ddo = registered_ddo
-
-        json_output_filename = get_resource_path('ddo',
-                                                 f'ddo_sample_generated_{index}.json')
-        with open(json_output_filename, 'w') as fp:
-            fp.write(ddo.as_text(is_pretty=True))
-
-
-@unit_test
 def test_find_service():
     ddo = generate_sample_ddo()
     service = ddo.find_service_by_id(0)
-    assert service and service.type == 'Access', 'Failed to find service by integer id.'
+    assert service and service.type == 'access', 'Failed to find service by integer id.'
     service = ddo.find_service_by_id('0')
-    assert service and service.type == 'Access', 'Failed to find service by str(int) id.'
+    assert service and service.type == 'access', 'Failed to find service by str(int) id.'
 
     service = ddo.find_service_by_id(1)
-    assert service and service.type == 'Compute', 'Failed to find service by integer id.'
+    assert service and service.type == 'compute', 'Failed to find service by integer id.'
     service = ddo.find_service_by_id('1')
-    assert service and service.type == 'Compute', 'Failed to find service by str(int) id.'
+    assert service and service.type == 'compute', 'Failed to find service by str(int) id.'
 
-    service = ddo.find_service_by_id('Access')
-    assert service and service.type == 'Access', 'Failed to find service by id using service type.'
+    service = ddo.find_service_by_id('access')
+    assert service and service.type == 'access', 'Failed to find service by id using service type.'
     assert service.index == '0', 'index not as expected.'
 
-    service = ddo.find_service_by_id('Compute')
-    assert service and service.type == 'Compute', 'Failed to find service by id using service type.'
+    service = ddo.find_service_by_id('compute')
+    assert service and service.type == 'compute', 'Failed to find service by id using service type.'
     assert service.index == '1', 'index not as expected.'
 
 
 def test_create_ddo(metadata):
+    from ocean_utils.utils.utilities import checksum
+    from ocean_utils.did import did_to_id_bytes
+    pub_acc = get_publisher_account()
     ddo = DDO()
-    ddo.add_service('metadata', metadata)
-    checksums = sorted()
+    ddo.add_service('metadata', values=metadata)
+    checksums = dict()
     for service in ddo.services:
-        checksums.append(service.index, service.attributes.main.checksum)
-    ddo.add_proof(checksums, '', Keeper.sign_hash(ddo.services, ''))
-    ddo.assign_did(DID.did(ddo.proof['checksum']))
-    ddo.add_authentication()
-    ddo.add_public_key()
+        checksums[str(service.index)] = checksum(service.main)
+    ddo.add_proof(checksums, pub_acc)
+    did = ddo.assign_did(DID.did(ddo.proof['checksum']))
+    ddo.proof['signatureValue'] = Keeper.sign_hash(did_to_id_bytes(did), pub_acc)
+    ddo.add_public_key(did, pub_acc.address)
+    ddo.add_authentication(did, PUBLIC_KEY_TYPE_RSA)

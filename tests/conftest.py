@@ -75,11 +75,11 @@ def setup_agreements_enviroment():
     publisher_acc = get_publisher_account()
     keeper = Keeper.get_instance()
 
-    service_definition_id = 'Access'
+    service_definition_id = 'access'
 
     ddo = get_ddo_sample()
-    ddo._did = DID.did()
-    # Remove '0x' from the start of ddo.metadata['main']['checksum']
+    ddo._did = DID.did({"0":"0x12341234"})
+    # Remove '0x' from the start of ddo.metadata['base']['checksum']
     text_for_sha3 = ddo.metadata['main']['checksum'][2:]
     keeper.did_registry.register(
         ddo.asset_id,
