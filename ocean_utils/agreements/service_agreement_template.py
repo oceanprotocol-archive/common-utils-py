@@ -1,4 +1,3 @@
-
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
 
@@ -13,10 +12,10 @@ class ServiceAgreementTemplate(object):
     DOCUMENT_TYPE = ServiceTypes.ASSET_ACCESS
     TEMPLATE_ID_KEY = 'templateId'
 
-    def __init__(self, template_json=None):
-        self.template_id = ''
-        self.name = ''
-        self.creator = ''
+    def __init__(self, template_id, name, creator, template_json=None):
+        self.template_id = template_id
+        self.name = name
+        self.creator = creator
         self.template = {}
         if template_json:
             self.parse_template_json(template_json)
@@ -39,11 +38,8 @@ class ServiceAgreementTemplate(object):
 
         :param template_json: json dict
         """
-        assert template_json['type'].lower() == self.DOCUMENT_TYPE, ''
-        self.template_id = template_json['templateId']
-        self.name = template_json['attributes']['main']['name']
-        self.creator = template_json['attributes']['main']['creator']
-        self.template = template_json['attributes']['serviceAgreementTemplate']
+        # assert template_json['type'].lower() == self.DOCUMENT_TYPE, ''
+        self.template = template_json
 
     def set_template_id(self, template_id):
         """
@@ -112,7 +108,8 @@ class ServiceAgreementTemplate(object):
         """
         keys in returned dict have the format <contract_name>.<event_name>
         """
-        cond_contract_tuples = [(cond, contract_by_name[cond.contract_name]) for cond in self.conditions]
+        cond_contract_tuples = [(cond, contract_by_name[cond.contract_name]) for cond in
+                                self.conditions]
         event_to_args = {
             f'{cond.contract_name}.{cond.events[0].name}': (
                 contract.get_event_argument_names(cond.events[0].name)
@@ -120,7 +117,8 @@ class ServiceAgreementTemplate(object):
             for cond, contract in cond_contract_tuples
         }
         agr_event_key = f'{self.contract_name}.{self.agreement_events[0].name}'
-        event_to_args[agr_event_key] = contract_by_name[self.contract_name].get_event_argument_names(
+        event_to_args[agr_event_key] = contract_by_name[
+            self.contract_name].get_event_argument_names(
             self.agreement_events[0].name
         )
 

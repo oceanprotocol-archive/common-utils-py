@@ -2,7 +2,6 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 from collections import namedtuple
-import json
 
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
 from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndexes
@@ -155,7 +154,10 @@ class ServiceAgreement(Service):
         """
         return cls(
             service_dict['attributes'],
-            ServiceAgreementTemplate(service_dict),
+            ServiceAgreementTemplate(service_dict['templateId'],
+                                     service_dict['attributes']['main']['name'],
+                                     service_dict['attributes']['main']['creator'],
+                                     service_dict['attributes']['serviceAgreementTemplate']),
             service_dict.get(cls.SERVICE_ENDPOINT),
             service_dict.get('type')
         )
@@ -170,7 +172,8 @@ class ServiceAgreement(Service):
         :param timelocks:
         :param timeouts:
         :param agreement_id: id of the agreement, hex str
-        :param hash_function: reference to function that will be used to compute the hash (sha3 or similar)
+        :param hash_function: reference to function that will be used to compute the hash (sha3
+        or similar)
         :return:
         """
         return hash_function(

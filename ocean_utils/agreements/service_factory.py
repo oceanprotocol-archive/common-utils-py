@@ -152,7 +152,8 @@ class ServiceFactory(object):
                        index=ServiceTypesIndexes.DEFAULT_ACCESS_INDEX)
 
     @staticmethod
-    def complete_access_service(did, service_endpoint, attributes, template_id, reward_contract_address):
+    def complete_access_service(did, service_endpoint, attributes, template_id,
+                                reward_contract_address):
         """
         Build the access service.
 
@@ -171,7 +172,8 @@ class ServiceFactory(object):
             '_rewardAddress': reward_contract_address
         }
         sla_template_dict = get_sla_template()
-        sla_template = ServiceAgreementTemplate(template_json=sla_template_dict)
+        sla_template = ServiceAgreementTemplate(template_id, 'access',
+                                                attributes['main']['creator'], sla_template_dict)
         sla_template.template_id = template_id
         conditions = sla_template.conditions[:]
         for cond in conditions:
