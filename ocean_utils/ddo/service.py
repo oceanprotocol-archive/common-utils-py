@@ -19,11 +19,10 @@ class Service:
     """Service class to create validate service in a DDO."""
     SERVICE_ENDPOINT = 'serviceEndpoint'
 
-    def __init__(self, service_endpoint, service_type, values, index=None, did=None):
+    def __init__(self, service_endpoint, service_type, values, index=None):
         """Initialize Service instance."""
         self._service_endpoint = service_endpoint
         self._type = service_type
-        self._did = did
         self._index = index
 
         # assign the _values property to empty until they are used
@@ -34,14 +33,6 @@ class Service:
                 if name not in reserved_names:
                     self._values[name] = value
 
-    @property
-    def did(self):
-        """
-        Id of the asset includes the `did:op:` prefix.
-
-        :return: DID, str
-        """
-        return self._did
 
     @property
     def type(self):
@@ -96,15 +87,6 @@ class Service:
         if name not in {'id', self.SERVICE_ENDPOINT, 'type'}:
             self._values[name] = value
 
-    def set_did(self, did):
-        """
-        Update the did.
-
-        :param did: DID, str
-        """
-        assert self._did is None, 'service did already set.'
-        self._did = did
-
     def as_text(self, is_pretty=False):
         """Return the service as a JSON string."""
         values = {
@@ -149,6 +131,7 @@ class Service:
             raise IndexError
 
         _type = sd.get('type')
+        _index = sd.get('index')
         if not _type:
             logger.error('Service definition in DDO document is missing the "type" key/value.')
             raise IndexError
@@ -158,5 +141,6 @@ class Service:
         return cls(
             service_endpoint,
             _type,
-            sd
+            sd,
+            _index
         )

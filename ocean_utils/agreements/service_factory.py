@@ -3,7 +3,7 @@
 
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
-from ocean_utils.agreements.service_types import ServiceTypes
+from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndexes
 from ocean_utils.agreements.utils import get_sla_template
 from ocean_utils.ddo.service import Service
 from ocean_utils.did import did_to_id
@@ -14,7 +14,7 @@ class ServiceDescriptor(object):
     item is a dict of parameters and values required by the service"""
 
     @staticmethod
-    def metadata_service_descriptor(metadata, service_endpoint):
+    def metadata_service_descriptor(attributes, service_endpoint):
         """
         Metadata service descriptor.
 
@@ -23,7 +23,7 @@ class ServiceDescriptor(object):
         :return: Service descriptor.
         """
         return (ServiceTypes.METADATA,
-                {'metadata': metadata, 'serviceEndpoint': service_endpoint})
+                {'attributes': attributes, 'serviceEndpoint': service_endpoint})
 
     @staticmethod
     def authorization_service_descriptor(service_endpoint):
@@ -34,11 +34,10 @@ class ServiceDescriptor(object):
         :return: Service descriptor.
         """
         return (ServiceTypes.AUTHORIZATION,
-                {'serviceEndpoint': service_endpoint})
+                {'attributes': {'main': {}}, 'serviceEndpoint': service_endpoint})
 
     @staticmethod
-    def access_service_descriptor(price, service_endpoint, timeout,
-                                  template_id, reward_contract_address):
+    def access_service_descriptor(attributes, service_endpoint):
         """
         Access service descriptor.
 
@@ -52,39 +51,15 @@ class ServiceDescriptor(object):
         """
         return (
             ServiceTypes.ASSET_ACCESS,
-            {
-                'price': price,
-                'serviceEndpoint': service_endpoint,
-                'timeout': timeout,
-                'templateId': template_id,
-                'rewardContractAddress': reward_contract_address}
+            {'attributes': attributes, 'serviceEndpoint': service_endpoint}
         )
-
-    @staticmethod
-    def compute_service_descriptor(price, service_endpoint,
-                                   timeout, reward_contract_address):
-        """
-        Compute service descriptor.
-
-        :param price: Asset price, int
-        :param service_endpoint: identifier of the service inside the asset DDO, str
-        :param timeout: amount of time in seconds before the agreement expires, int
-        :param reward_contract_address: hex str ethereum address of deployed reward condition
-            smart contract
-        :return: Service descriptor.
-        """
-        return (ServiceTypes.CLOUD_COMPUTE,
-                {'price': price,
-                 'serviceEndpoint': service_endpoint,
-                 'timeout': timeout,
-                 'rewardContractAddress': reward_contract_address})
 
 
 class ServiceFactory(object):
     """Factory class to create Services."""
 
     @staticmethod
-    def build_services(did, service_descriptors):
+    def build_services(service_descriptors):
         """
         Build a list of services.
 
@@ -97,7 +72,7 @@ class ServiceFactory(object):
         services = []
         sa_def_key = ServiceAgreement.SERVICE_INDEX
         for i, service_desc in enumerate(service_descriptors):
-            service = ServiceFactory.build_service(service_desc, did)
+            service = ServiceFactory.build_service(service_desc)
             # set index for each service
             service.update_value(sa_def_key, str(i))
             services.append(service)
@@ -105,7 +80,7 @@ class ServiceFactory(object):
         return services
 
     @staticmethod
-    def build_service(service_descriptor, did):
+    def build_service(service_descriptor):
         """
         Build a service.
 
@@ -119,34 +94,25 @@ class ServiceFactory(object):
         service_type, kwargs = service_descriptor
         if service_type == ServiceTypes.METADATA:
             return ServiceFactory.build_metadata_service(
-                did,
-                kwargs['metadata'],
+                kwargs['attributes'],
                 kwargs['serviceEndpoint']
             )
 
         elif service_type == ServiceTypes.AUTHORIZATION:
             return ServiceFactory.build_authorization_service(
+                kwargs['attributes'],
                 kwargs['serviceEndpoint']
             )
 
         elif service_type == ServiceTypes.ASSET_ACCESS:
             return ServiceFactory.build_access_service(
-                did, kwargs['price'],
-                kwargs['purchaseEndpoint'], kwargs['serviceEndpoint'],
-                kwargs['timeout'], kwargs['templateId'], kwargs['rewardContractAddress']
+                kwargs['attributes'],
+                kwargs['serviceEndpoint']
             )
-
-        elif service_type == ServiceTypes.CLOUD_COMPUTE:
-            return ServiceFactory.build_compute_service(
-                did, kwargs['price'],
-                kwargs['purchaseEndpoint'], kwargs['serviceEndpoint'],
-                kwargs['timeout'], kwargs['rewardContractAddress']
-            )
-
         raise ValueError(f'Unknown service type {service_type}')
 
     @staticmethod
-    def build_metadata_service(did, metadata, service_endpoint):
+    def build_metadata_service(metadata, service_endpoint):
         """
         Build a metadata service.
 
@@ -157,11 +123,12 @@ class ServiceFactory(object):
         """
         return Service(service_endpoint,
                        ServiceTypes.METADATA,
-                       values={'metadata': metadata},
-                       did=did)
+                       values={'attributes': metadata},
+                       index=ServiceTypesIndexes.DEFAULT_METADATA_INDEX
+                       )
 
     @staticmethod
-    def build_authorization_service(service_endpoint):
+    def build_authorization_service(attributes, service_endpoint):
         """
         Build an authorization service.
 
@@ -169,17 +136,28 @@ class ServiceFactory(object):
         :return: Service
         """
         return Service(service_endpoint, ServiceTypes.AUTHORIZATION,
-                       values={'service': 'SecretStore'})
+                       values={'attributes': attributes},
+                       index=ServiceTypesIndexes.DEFAULT_AUTHORIZATION_INDEX)
 
     @staticmethod
-    def build_access_service(did, price, purchase_endpoint, service_endpoint,
-                             timeout, template_id, reward_contract_address):
+    def build_access_service(attributes, service_endpoint):
+        """
+        Build an authorization service.
+
+        :param service_endpoint:
+        :return: Service
+        """
+        return Service(service_endpoint, ServiceTypes.ASSET_ACCESS,
+                       values={'attributes': attributes},
+                       index=ServiceTypesIndexes.DEFAULT_ACCESS_INDEX)
+
+    @staticmethod
+    def complete_access_service(did, service_endpoint, attributes, template_id, reward_contract_address):
         """
         Build the access service.
 
         :param did: DID, str
         :param price: Asset price, int
-        :param purchase_endpoint: url of the service provider, str
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :param timeout: amount of time in seconds before the agreement expires, int
         :param template_id: id of the template use to create the service, str
@@ -187,10 +165,9 @@ class ServiceFactory(object):
             smart contract
         :return: ServiceAgreement
         """
-        # TODO fill all the possible mappings
         param_map = {
             '_documentId': did_to_id(did),
-            '_amount': price,
+            '_amount': attributes['main']['price'],
             '_rewardAddress': reward_contract_address
         }
         sla_template_dict = get_sla_template()
@@ -202,21 +179,13 @@ class ServiceFactory(object):
                 param.value = param_map.get(param.name, '')
 
             if cond.timeout > 0:
-                cond.timeout = timeout
+                cond.timeout = attributes['main']['timeout']
 
         sla_template.set_conditions(conditions)
         sa = ServiceAgreement(
-            1,
+            attributes,
             sla_template,
             service_endpoint,
-            purchase_endpoint,
             ServiceTypes.ASSET_ACCESS
         )
-        sa.set_did(did)
         return sa
-
-    @staticmethod
-    def build_compute_service(did, price, purchase_endpoint, service_endpoint,
-                              timeout, reward_contract_address):
-        # TODO: implement this once the compute flow is ready
-        return

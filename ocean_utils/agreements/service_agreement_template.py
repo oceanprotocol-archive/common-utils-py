@@ -39,7 +39,7 @@ class ServiceAgreementTemplate(object):
 
         :param template_json: json dict
         """
-        assert template_json['type'] == self.DOCUMENT_TYPE, ''
+        assert template_json['type'].lower() == self.DOCUMENT_TYPE, ''
         self.template_id = template_json['templateId']
         self.name = template_json.get('name')
         self.creator = template_json.get('creator')

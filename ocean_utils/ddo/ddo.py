@@ -23,7 +23,7 @@ logger = logging.getLogger('ddo')
 class DDO:
     """DDO class to create, import, export, validate DDO objects."""
 
-    def __init__(self, did='', json_text=None, json_filename=None, created=None, dictionary=None):
+    def __init__(self, did=None, json_text=None, json_filename=None, created=None, dictionary=None):
         """Clear the DDO data values."""
         self._did = did
         self._public_keys = []
@@ -133,7 +133,7 @@ class DDO:
         if isinstance(service_type, Service):
             service = service_type
         else:
-            service = Service(service_endpoint, service_type, values, index, did=self._did)
+            service = Service(service_endpoint, service_type, values, index)
         logger.debug(f'Adding service with service type {service_type} with did {self._did}')
         self._services.append(service)
 
@@ -208,7 +208,6 @@ class DDO:
                 if isinstance(value, str):
                     value = json.loads(value)
                 service = Service.from_json(value)
-                service.set_did(self._did)
                 self._services.append(service)
         if 'proof' in values:
             self._proof = values['proof']
@@ -254,29 +253,27 @@ class DDO:
                 return service
         return None
 
-    def find_service_by_id(self, service_id):
+    def get_service_by_index(self, index):
         """
-        Get service for a given service_id.
+        Get service for a given index.
 
-        :param service_id: Service id, str
+        :param index: Service id, str
         :return: Service
         """
-        service_id_key = 'index'
-        service_id = str(service_id)
+        index = int(index)
         for service in self._services:
-            if service_id_key in service.values and str(
-                    service.values[service_id_key]) == service_id:
+            if service.index == index:
                 return service
 
         try:
             # If service_id is int or can be converted to int then we couldn't find it
-            int(service_id)
+            int(index)
             return None
         except ValueError:
             pass
 
         # try to find by type
-        return self.get_service(service_id)
+        return self.get_service(index)
 
     @property
     def public_keys(self):

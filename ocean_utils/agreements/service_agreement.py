@@ -4,7 +4,7 @@
 from collections import namedtuple
 
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
-from ocean_utils.agreements.service_types import ServiceTypes
+from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndexes
 from ocean_utils.ddo.service import Service
 from ocean_utils.utils.utilities import generate_prefixed_id
 
@@ -16,32 +16,32 @@ class ServiceAgreement(Service):
     SERVICE_INDEX = 'index'
     AGREEMENT_TEMPLATE = 'serviceAgreementTemplate'
     SERVICE_CONDITIONS = 'conditions'
-    PURCHASE_ENDPOINT = 'purchaseEndpoint'
     SERVICE_ENDPOINT = 'serviceEndpoint'
 
-    def __init__(self, sa_definition_id, service_agreement_template, service_endpoint=None,
-                 purchase_endpoint=None, service_type=None):
+    def __init__(self, attributes, service_agreement_template, service_endpoint=None,
+                 service_type=None):
         """
 
         :param sa_definition_id:
         :param service_agreement_template: ServiceAgreementTemplate instance
         :param service_endpoint: str URL to use for requesting service defined in this agreement
-        :param purchase_endpoint: str URL to use for consuming the service after access is given
         :param service_type: str like ServiceTypes.ASSET_ACCESS
         """
-        self.sa_definition_id = sa_definition_id
         self.service_agreement_template = service_agreement_template
 
         values_dict = {
-            ServiceAgreement.SERVICE_INDEX: self.sa_definition_id,
             ServiceAgreementTemplate.TEMPLATE_ID_KEY: self.template_id,
 
         }
         values_dict.update(self.service_agreement_template.as_dictionary())
+        values = dict()
+        values['attributes']= dict()
+        values['attributes'] = attributes
+        values['attributes']['serviceAgreementTemplate']= service_agreement_template.__dict__
 
         Service.__init__(self, service_endpoint,
                          service_type or ServiceTypes.ASSET_ACCESS,
-                         values_dict, purchase_endpoint)
+                         values, ServiceTypesIndexes.DEFAULT_ACCESS_INDEX)
 
     def get_price(self):
         """
@@ -61,14 +61,6 @@ class ServiceAgreement(Service):
         :return:
         """
         return self._service_endpoint
-
-    @property
-    def purchase_endpoint(self):
-        """
-
-        :return:
-        """
-        return self._purchase_endpoint
 
     @property
     def agreement(self):
@@ -146,7 +138,7 @@ class ServiceAgreement(Service):
         :param ddo:
         :return:
         """
-        service_def = ddo.find_service_by_id(service_definition_id).as_dictionary()
+        service_def = ddo.get_service_by_index(service_definition_id).as_dictionary()
         if not service_def:
             raise ValueError(
                 f'Service with definition id {service_definition_id} is not found in this DDO.')
@@ -164,7 +156,6 @@ class ServiceAgreement(Service):
             service_dict[cls.SERVICE_INDEX],
             ServiceAgreementTemplate(service_dict),
             service_dict.get(cls.SERVICE_ENDPOINT),
-            service_dict.get(cls.PURCHASE_ENDPOINT),
             service_dict.get('type')
         )
 
