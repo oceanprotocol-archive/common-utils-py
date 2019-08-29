@@ -128,7 +128,6 @@
       "templateId": "",
       "attributes": {
         "main": {
-          "purchaseEndpoint": "http://localhost:8030/api/v1/brizo/services/access/initialize",
           "name": "dataAssetAccessServiceAgreement",
           "creator": "",
           "datePublished": "2019-02-08T08:13:49Z",

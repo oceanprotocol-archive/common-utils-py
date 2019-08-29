@@ -41,9 +41,9 @@ class ServiceAgreementTemplate(object):
         """
         assert template_json['type'].lower() == self.DOCUMENT_TYPE, ''
         self.template_id = template_json['templateId']
-        self.name = template_json.get('name')
-        self.creator = template_json.get('creator')
-        self.template = template_json['serviceAgreementTemplate']
+        self.name = template_json['attributes']['main']['name']
+        self.creator = template_json['attributes']['main']['creator']
+        self.template = template_json['attributes']['serviceAgreementTemplate']
 
     def set_template_id(self, template_id):
         """

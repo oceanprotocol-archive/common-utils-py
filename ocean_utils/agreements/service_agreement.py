@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 from collections import namedtuple
+import json
 
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
 from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndexes
@@ -22,7 +23,7 @@ class ServiceAgreement(Service):
                  service_type=None):
         """
 
-        :param sa_definition_id:
+        :param attributes: attributes
         :param service_agreement_template: ServiceAgreementTemplate instance
         :param service_endpoint: str URL to use for requesting service defined in this agreement
         :param service_type: str like ServiceTypes.ASSET_ACCESS
@@ -35,9 +36,9 @@ class ServiceAgreement(Service):
         }
         values_dict.update(self.service_agreement_template.as_dictionary())
         values = dict()
-        values['attributes']= dict()
+        values['attributes'] = dict()
         values['attributes'] = attributes
-        values['attributes']['serviceAgreementTemplate']= service_agreement_template.__dict__
+        values['attributes']['serviceAgreementTemplate'] = service_agreement_template.__dict__
 
         Service.__init__(self, service_endpoint,
                          service_type or ServiceTypes.ASSET_ACCESS,
@@ -131,17 +132,17 @@ class ServiceAgreement(Service):
         return [cond.contract_name for cond in self.conditions]
 
     @classmethod
-    def from_ddo(cls, service_definition_id, ddo):
+    def from_ddo(cls, service_type, ddo):
         """
 
-        :param service_definition_id: identifier of the service inside the asset DDO, str
+        :param service_type: identifier of the service inside the asset DDO, str
         :param ddo:
         :return:
         """
-        service_def = ddo.get_service_by_index(service_definition_id).as_dictionary()
+        service_def = ddo.get_service(service_type).as_dictionary()
         if not service_def:
             raise ValueError(
-                f'Service with definition id {service_definition_id} is not found in this DDO.')
+                f'Service with definition id {service_type} is not found in this DDO.')
 
         return cls.from_service_dict(service_def)
 
@@ -153,7 +154,7 @@ class ServiceAgreement(Service):
         :return:
         """
         return cls(
-            service_dict[cls.SERVICE_INDEX],
+            service_dict['attributes'],
             ServiceAgreementTemplate(service_dict),
             service_dict.get(cls.SERVICE_ENDPOINT),
             service_dict.get('type')
