@@ -28,13 +28,8 @@ class ServiceAgreement(Service):
         :param service_type: str like ServiceTypes.ASSET_ACCESS
         """
         self.service_agreement_template = service_agreement_template
-
-        values_dict = {
-            ServiceAgreementTemplate.TEMPLATE_ID_KEY: self.template_id,
-
-        }
-        values_dict.update(self.service_agreement_template.as_dictionary())
         values = dict()
+        values[ServiceAgreementTemplate.TEMPLATE_ID_KEY] = self.template_id
         values['attributes'] = dict()
         values['attributes'] = attributes
         values['attributes']['serviceAgreementTemplate'] = service_agreement_template.__dict__
@@ -157,7 +152,7 @@ class ServiceAgreement(Service):
             ServiceAgreementTemplate(service_dict['templateId'],
                                      service_dict['attributes']['main']['name'],
                                      service_dict['attributes']['main']['creator'],
-                                     service_dict['attributes']['serviceAgreementTemplate']),
+                                     service_dict['attributes']),
             service_dict.get(cls.SERVICE_ENDPOINT),
             service_dict.get('type')
         )

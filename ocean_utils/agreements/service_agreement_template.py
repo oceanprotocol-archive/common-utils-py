@@ -20,18 +20,6 @@ class ServiceAgreementTemplate(object):
         if template_json:
             self.parse_template_json(template_json)
 
-    @classmethod
-    def from_json_file(cls, path):
-        """
-        Return a template from a json allocated in a path.
-
-        :param path: string
-        :return: ServiceAgreementTemplate
-        """
-        with open(path) as jsf:
-            template_json = json.load(jsf)
-            return cls(template_json=template_json)
-
     def parse_template_json(self, template_json):
         """
         Parse a template from a json.
@@ -39,7 +27,7 @@ class ServiceAgreementTemplate(object):
         :param template_json: json dict
         """
         # assert template_json['type'].lower() == self.DOCUMENT_TYPE, ''
-        self.template = template_json
+        self.template = template_json['serviceAgreementTemplate']
 
     def set_template_id(self, template_id):
         """

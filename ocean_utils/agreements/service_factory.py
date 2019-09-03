@@ -18,7 +18,7 @@ class ServiceDescriptor(object):
         """
         Metadata service descriptor.
 
-        :param metadata: conforming to the Metadata accepted by Ocean Protocol, dict
+        :param attributes: conforming to the Metadata accepted by Ocean Protocol, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :return: Service descriptor.
         """
@@ -41,16 +41,26 @@ class ServiceDescriptor(object):
         """
         Access service descriptor.
 
-        :param price: Asset price, int
+        :param attributes
         :param service_endpoint: identifier of the service inside the asset DDO, str
-        :param timeout: amount of time in seconds before the agreement expires, int
-        :param template_id: id of the template use to create the service, str
-        :param reward_contract_address: hex str ethereum address of deployed reward condition
-            smart contract
         :return: Service descriptor.
         """
         return (
             ServiceTypes.ASSET_ACCESS,
+            {'attributes': attributes, 'serviceEndpoint': service_endpoint}
+        )
+
+    @staticmethod
+    def compute_service_descriptor(attributes, service_endpoint):
+        """
+        Compute service descriptor.
+
+        :param attributes
+        :param service_endpoint: identifier of the service inside the asset DDO, str
+        :return: Service descriptor.
+        """
+        return (
+            ServiceTypes.CLOUD_COMPUTE,
             {'attributes': attributes, 'serviceEndpoint': service_endpoint}
         )
 
@@ -109,6 +119,11 @@ class ServiceFactory(object):
                 kwargs['attributes'],
                 kwargs['serviceEndpoint']
             )
+        elif service_type == ServiceTypes.CLOUD_COMPUTE:
+            return ServiceFactory.build_compute_service(
+                kwargs['attributes'],
+                kwargs['serviceEndpoint']
+            )
         raise ValueError(f'Unknown service type {service_type}')
 
     @staticmethod
@@ -150,6 +165,18 @@ class ServiceFactory(object):
         return Service(service_endpoint, ServiceTypes.ASSET_ACCESS,
                        values={'attributes': attributes},
                        index=ServiceTypesIndexes.DEFAULT_ACCESS_INDEX)
+
+    @staticmethod
+    def build_compute_service(attributes, service_endpoint):
+        """
+        Build an authorization service.
+
+        :param service_endpoint:
+        :return: Service
+        """
+        return Service(service_endpoint, ServiceTypes.CLOUD_COMPUTE,
+                       values={'attributes': attributes},
+                       index=ServiceTypesIndexes.DEFAULT_COMPUTING_INDEX)
 
     @staticmethod
     def complete_access_service(did, service_endpoint, attributes, template_id,
