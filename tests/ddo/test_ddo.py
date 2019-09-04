@@ -9,6 +9,7 @@ import json
 import pytest
 from ocean_keeper import Keeper
 
+from ocean_utils.agreements.service_agreement import ServiceTypes
 from ocean_utils.ddo.ddo import DDO
 from ocean_utils.ddo.public_key_base import PublicKeyBase
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_ETHEREUM_ECDSA, PUBLIC_KEY_TYPE_RSA
@@ -25,7 +26,7 @@ TEST_SERVICE_URL = 'http://localhost:8005'
 def test_create_ddo(metadata):
     pub_acc = get_publisher_account()
     ddo = DDO()
-    ddo.add_service('metadata', 'http://myaquarius.com', values=metadata, index='0')
+    ddo.add_service(ServiceTypes.METADATA, 'http://myaquarius.com', values=metadata, index='0')
     checksums = dict()
     for service in ddo.services:
         checksums[str(service.index)] = checksum(service.main)
@@ -110,9 +111,9 @@ def test_load_ddo_json():
     sample_ddo_json_string = json.dumps(sample_ddo_json_dict)
 
     this_ddo = DDO(json_text=sample_ddo_json_string)
-    service = this_ddo.get_service('metadata')
+    service = this_ddo.get_service(ServiceTypes.METADATA)
     assert service
-    assert service.type == 'metadata'
+    assert service.type == ServiceTypes.METADATA
     assert service.attributes
 
 
@@ -130,20 +131,26 @@ def test_ddo_dict():
 def test_find_service():
     ddo = get_ddo_sample()
     service = ddo.get_service_by_index(0)
-    assert service and service.type == 'metadata', 'Failed to find service by integer id.'
+    assert service and service.type == ServiceTypes.METADATA, 'Failed to find service by integer ' \
+                                                              'id.'
     service = ddo.get_service_by_index('0')
-    assert service and service.type == 'metadata', 'Failed to find service by str(int) id.'
+    assert service and service.type == ServiceTypes.METADATA, 'Failed to find service by str(int)' \
+                                                              ' id.'
 
     service = ddo.get_service_by_index(3)
-    assert service and service.type == 'access', 'Failed to find service by integer id.'
+    assert service and service.type == ServiceTypes.ASSET_ACCESS, 'Failed to find service by ' \
+                                                                  'integer id.'
     service = ddo.get_service_by_index('3')
-    assert service and service.type == 'access', 'Failed to find service by str(int) id.'
+    assert service and service.type == ServiceTypes.ASSET_ACCESS, 'Failed to find service by str(' \
+                                                                  'int) id.'
 
-    service = ddo.get_service('access')
-    assert service and service.type == 'access', 'Failed to find service by id using service type.'
+    service = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    assert service and service.type == ServiceTypes.ASSET_ACCESS, 'Failed to find service by id ' \
+                                                                  'using service type.'
     assert service.index == 3, 'index not as expected.'
 
-    service = ddo.get_service('metadata')
-    assert service and service.type == 'metadata', 'Failed to find service by id using service ' \
-                                                   'type.'
+    service = ddo.get_service(ServiceTypes.METADATA)
+    assert service and service.type == ServiceTypes.METADATA, 'Failed to find service by id using ' \
+                                                              'service ' \
+                                                              'type.'
     assert service.index == 0, 'index not as expected.'

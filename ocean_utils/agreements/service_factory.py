@@ -199,7 +199,7 @@ class ServiceFactory(object):
             '_rewardAddress': reward_contract_address
         }
         sla_template_dict = get_sla_template()
-        sla_template = ServiceAgreementTemplate(template_id, 'access',
+        sla_template = ServiceAgreementTemplate(template_id, ServiceTypes.ASSET_ACCESS,
                                                 attributes['main']['creator'], sla_template_dict)
         sla_template.template_id = template_id
         conditions = sla_template.conditions[:]

@@ -133,12 +133,12 @@ class ServiceAgreement(Service):
         :param ddo:
         :return:
         """
-        service_def = ddo.get_service(service_type).as_dictionary()
-        if not service_def:
+        service_dict = ddo.get_service(service_type).as_dictionary()
+        if not service_dict:
             raise ValueError(
                 f'Service with definition id {service_type} is not found in this DDO.')
 
-        return cls.from_service_dict(service_def)
+        return cls.from_service_dict(service_dict)
 
     @classmethod
     def from_service_dict(cls, service_dict):

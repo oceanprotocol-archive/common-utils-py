@@ -208,7 +208,7 @@ class DDO:
             for value in values['service']:
                 if isinstance(value, str):
                     value = json.loads(value)
-                if value['type'] == 'access':
+                if value['type'] == ServiceTypes.ASSET_ACCESS:
                     service = ServiceAgreement.from_service_dict(value)
                 else:
                     service = Service.from_json(value)
@@ -270,7 +270,7 @@ class DDO:
                 return service
 
         try:
-            # If service_id is int or can be converted to int then we couldn't find it
+            # If index is int or can be converted to int then we couldn't find it
             int(index)
             return None
         except ValueError:

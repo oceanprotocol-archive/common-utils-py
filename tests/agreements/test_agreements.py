@@ -4,7 +4,7 @@
 from ocean_keeper.utils import generate_multi_value_hash
 from web3 import Web3
 
-from ocean_utils.agreements.service_agreement import ServiceAgreement
+from ocean_utils.agreements.service_agreement import ServiceAgreement, ServiceTypes
 from tests.resources.helper_functions import (
     get_ddo_sample,
     log_event
@@ -142,7 +142,8 @@ def test_agreement_hash():
     agreement_id = '0xf136d6fadecb48fdb2fc1fb420f5a5d1c32d22d9424e47ab9461556e058fefaa'
     ddo = get_ddo_sample()
 
-    sa = ServiceAgreement.from_service_dict(ddo.get_service(service_type='access').as_dictionary())
+    sa = ServiceAgreement.from_service_dict(
+        ddo.get_service(ServiceTypes.ASSET_ACCESS).as_dictionary())
     sa.service_agreement_template.set_template_id(template_id)
     assert template_id == sa.template_id, ''
     assert did == ddo.did
