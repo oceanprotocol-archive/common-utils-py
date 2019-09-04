@@ -134,14 +134,14 @@ def test_find_service():
     service = ddo.get_service_by_index('0')
     assert service and service.type == 'metadata', 'Failed to find service by str(int) id.'
 
-    service = ddo.get_service_by_index(1)
+    service = ddo.get_service_by_index(3)
     assert service and service.type == 'access', 'Failed to find service by integer id.'
-    service = ddo.get_service_by_index('1')
+    service = ddo.get_service_by_index('3')
     assert service and service.type == 'access', 'Failed to find service by str(int) id.'
 
     service = ddo.get_service('access')
     assert service and service.type == 'access', 'Failed to find service by id using service type.'
-    assert service.index == 1, 'index not as expected.'
+    assert service.index == 3, 'index not as expected.'
 
     service = ddo.get_service('metadata')
     assert service and service.type == 'metadata', 'Failed to find service by id using service ' \

@@ -8,6 +8,7 @@ import logging
 
 from eth_utils import add_0x_prefix
 
+from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.ddo.public_key_base import PublicKeyBase
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_ETHEREUM_ECDSA
@@ -207,7 +208,10 @@ class DDO:
             for value in values['service']:
                 if isinstance(value, str):
                     value = json.loads(value)
-                service = Service.from_json(value)
+                if value['type'] == 'access':
+                    service = ServiceAgreement.from_service_dict(value)
+                else:
+                    service = Service.from_json(value)
                 self._services.append(service)
         if 'proof' in values:
             self._proof = values['proof']

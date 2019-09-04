@@ -27,7 +27,10 @@ class ServiceAgreementTemplate(object):
         :param template_json: json dict
         """
         # assert template_json['type'].lower() == self.DOCUMENT_TYPE, ''
-        self.template = template_json['serviceAgreementTemplate']
+        if 'template' in template_json['serviceAgreementTemplate']:
+            self.template = template_json['serviceAgreementTemplate']['template']
+        else:
+            self.template = template_json['serviceAgreementTemplate']
 
     def set_template_id(self, template_id):
         """
