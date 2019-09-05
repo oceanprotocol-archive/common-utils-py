@@ -4,7 +4,7 @@
 from collections import namedtuple
 
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
-from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndexes
+from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndices
 from ocean_utils.ddo.service import Service
 from ocean_utils.utils.utilities import generate_prefixed_id
 
@@ -36,7 +36,7 @@ class ServiceAgreement(Service):
 
         Service.__init__(self, service_endpoint,
                          service_type or ServiceTypes.ASSET_ACCESS,
-                         values, ServiceTypesIndexes.DEFAULT_ACCESS_INDEX)
+                         values, ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
 
     def get_price(self):
         """
@@ -136,7 +136,7 @@ class ServiceAgreement(Service):
         service_dict = ddo.get_service(service_type).as_dictionary()
         if not service_dict:
             raise ValueError(
-                f'Service with definition id {service_type} is not found in this DDO.')
+                f'Service of type {service_type} is not found in this DDO.')
 
         return cls.from_service_dict(service_dict)
 

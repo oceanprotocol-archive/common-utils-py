@@ -86,7 +86,7 @@ class DDO:
     @property
     def encrypted_files(self):
         """Return encryptedFiles field in the base metadata."""
-        files = self.metadata['main']['encryptedFiles']
+        files = self.metadata['encryptedFiles']
         return files
 
     def assign_did(self, did):
@@ -218,7 +218,11 @@ class DDO:
 
     def add_proof(self, checksums, publisher_account):
         """Add a proof to the DDO, based on the public_key id/index and signed with the private key
-        add a static proof to the DDO, based on one of the public keys."""
+        add a static proof to the DDO, based on one of the public keys.
+
+        :param checksums: dict with the checksum of the main attributes of each service, dict
+        :param publisher_account: account of the publisher, account
+        """
         self._proof = {
             'type': PROOF_TYPE,
             'created': get_timestamp(),
@@ -264,17 +268,15 @@ class DDO:
         :param index: Service id, str
         :return: Service
         """
-        index = int(index)
+        try:
+            index = int(index)
+        except ValueError:
+            logging.error(f'The index {index} can not be converted into a int')
+            return None
+
         for service in self._services:
             if service.index == index:
                 return service
-
-        try:
-            # If index is int or can be converted to int then we couldn't find it
-            int(index)
-            return None
-        except ValueError:
-            pass
 
         # try to find by type
         return self.get_service(index)

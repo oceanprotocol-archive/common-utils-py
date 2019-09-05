@@ -12,7 +12,7 @@ class ServiceTypes:
     CLOUD_COMPUTE = 'compute'
 
 
-class ServiceTypesIndexes:
+class ServiceTypesIndices:
     DEFAULT_METADATA_INDEX = 0
     DEFAULT_PROVENANCE_INDEX = 1
     DEFAULT_AUTHORIZATION_INDEX = 2

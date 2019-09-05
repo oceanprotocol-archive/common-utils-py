@@ -52,7 +52,6 @@ class Aquarius:
         """
         Retrieve the endpoint with the ddo for a given did.
 
-        :param did: Asset DID string
         :return: Return the url of the the ddo location
         """
         return f'{self.url}/' + '{did}'

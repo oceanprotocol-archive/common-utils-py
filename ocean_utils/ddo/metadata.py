@@ -31,7 +31,7 @@ class CurationMeta(object):
 
 
 class MetadataMain(object):
-    """The base attributes are recommended to be included in the Asset Metadata."""
+    """The main attributes that need to be included in the Asset Metadata."""
     KEY = 'main'
     VALUES_KEYS = {
         'author',

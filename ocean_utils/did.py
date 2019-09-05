@@ -23,6 +23,7 @@ class DID:
         Format of the did:
         did:op:cb36cf78d87f4ce4a784f17c2a4a694f19f3fbf05b814ac6b0b7197163888865
 
+        :param seed: The list of checksums that is allocated in the proof, dict
         :return: Asset did, str.
         """
         return OCEAN_PREFIX + remove_0x_prefix(checksum(seed))

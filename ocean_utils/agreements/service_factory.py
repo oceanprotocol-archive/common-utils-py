@@ -3,7 +3,7 @@
 
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
-from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndexes
+from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndices
 from ocean_utils.agreements.utils import get_sla_template
 from ocean_utils.ddo.service import Service
 from ocean_utils.did import did_to_id
@@ -41,7 +41,7 @@ class ServiceDescriptor(object):
         """
         Access service descriptor.
 
-        :param attributes
+        :param attributes: attributes of the access service, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :return: Service descriptor.
         """
@@ -55,7 +55,7 @@ class ServiceDescriptor(object):
         """
         Compute service descriptor.
 
-        :param attributes
+        :param attributes: attributes of the compute service, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :return: Service descriptor.
         """
@@ -73,7 +73,6 @@ class ServiceFactory(object):
         """
         Build a list of services.
 
-        :param did: DID, str
         :param service_descriptors: List of tuples of length 2. The first item must be one of
         ServiceTypes
         and the second item is a dict of parameters and values required by the service
@@ -96,7 +95,6 @@ class ServiceFactory(object):
 
         :param service_descriptor: Tuples of length 2. The first item must be one of ServiceTypes
         and the second item is a dict of parameters and values required by the service
-        :param did: DID, str
         :return: Service
         """
         assert isinstance(service_descriptor, tuple) and len(
@@ -131,7 +129,6 @@ class ServiceFactory(object):
         """
         Build a metadata service.
 
-        :param did: DID, str
         :param metadata: conforming to the Metadata accepted by Ocean Protocol, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :return: Service
@@ -139,7 +136,7 @@ class ServiceFactory(object):
         return Service(service_endpoint,
                        ServiceTypes.METADATA,
                        values={'attributes': metadata},
-                       index=ServiceTypesIndexes.DEFAULT_METADATA_INDEX
+                       index=ServiceTypesIndices.DEFAULT_METADATA_INDEX
                        )
 
     @staticmethod
@@ -147,36 +144,39 @@ class ServiceFactory(object):
         """
         Build an authorization service.
 
-        :param service_endpoint:
+        :param attributes: attributes of authorization service, dict
+        :param service_endpoint: identifier of the service inside the asset DDO, str
         :return: Service
         """
         return Service(service_endpoint, ServiceTypes.AUTHORIZATION,
                        values={'attributes': attributes},
-                       index=ServiceTypesIndexes.DEFAULT_AUTHORIZATION_INDEX)
+                       index=ServiceTypesIndices.DEFAULT_AUTHORIZATION_INDEX)
 
     @staticmethod
     def build_access_service(attributes, service_endpoint):
         """
         Build an authorization service.
 
-        :param service_endpoint:
+        :param attributes: attributes of access service, dict
+        :param service_endpoint: identifier of the service inside the asset DDO, str
         :return: Service
         """
         return Service(service_endpoint, ServiceTypes.ASSET_ACCESS,
                        values={'attributes': attributes},
-                       index=ServiceTypesIndexes.DEFAULT_ACCESS_INDEX)
+                       index=ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
 
     @staticmethod
     def build_compute_service(attributes, service_endpoint):
         """
         Build an authorization service.
 
-        :param service_endpoint:
+        :param attributes: attributes of compute service, dict
+        :param service_endpoint: identifier of the service inside the asset DDO, str
         :return: Service
         """
         return Service(service_endpoint, ServiceTypes.CLOUD_COMPUTE,
                        values={'attributes': attributes},
-                       index=ServiceTypesIndexes.DEFAULT_COMPUTING_INDEX)
+                       index=ServiceTypesIndices.DEFAULT_COMPUTING_INDEX)
 
     @staticmethod
     def complete_access_service(did, service_endpoint, attributes, template_id,
@@ -185,9 +185,7 @@ class ServiceFactory(object):
         Build the access service.
 
         :param did: DID, str
-        :param price: Asset price, int
         :param service_endpoint: identifier of the service inside the asset DDO, str
-        :param timeout: amount of time in seconds before the agreement expires, int
         :param template_id: id of the template use to create the service, str
         :param reward_contract_address: hex str ethereum address of deployed reward condition
             smart contract
