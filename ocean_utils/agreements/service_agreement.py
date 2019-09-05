@@ -4,7 +4,7 @@
 from collections import namedtuple
 
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
-from ocean_utils.agreements.service_types import ServiceTypes
+from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndices
 from ocean_utils.ddo.service import Service
 from ocean_utils.utils.utilities import generate_prefixed_id
 
@@ -13,35 +13,30 @@ Agreement = namedtuple('Agreement', ('template', 'conditions'))
 
 class ServiceAgreement(Service):
     """Class representing a Service Agreement."""
-    SERVICE_DEFINITION_ID = 'serviceDefinitionId'
+    SERVICE_INDEX = 'index'
     AGREEMENT_TEMPLATE = 'serviceAgreementTemplate'
     SERVICE_CONDITIONS = 'conditions'
-    PURCHASE_ENDPOINT = 'purchaseEndpoint'
     SERVICE_ENDPOINT = 'serviceEndpoint'
 
-    def __init__(self, sa_definition_id, service_agreement_template, service_endpoint=None,
-                 purchase_endpoint=None, service_type=None):
+    def __init__(self, attributes, service_agreement_template, service_endpoint=None,
+                 service_type=None):
         """
 
-        :param sa_definition_id:
+        :param attributes: attributes
         :param service_agreement_template: ServiceAgreementTemplate instance
         :param service_endpoint: str URL to use for requesting service defined in this agreement
-        :param purchase_endpoint: str URL to use for consuming the service after access is given
         :param service_type: str like ServiceTypes.ASSET_ACCESS
         """
-        self.sa_definition_id = sa_definition_id
         self.service_agreement_template = service_agreement_template
-
-        values_dict = {
-            ServiceAgreement.SERVICE_DEFINITION_ID: self.sa_definition_id,
-            ServiceAgreementTemplate.TEMPLATE_ID_KEY: self.template_id,
-
-        }
-        values_dict.update(self.service_agreement_template.as_dictionary())
+        values = dict()
+        values[ServiceAgreementTemplate.TEMPLATE_ID_KEY] = self.template_id
+        values['attributes'] = dict()
+        values['attributes'] = attributes
+        values['attributes']['serviceAgreementTemplate'] = service_agreement_template.__dict__
 
         Service.__init__(self, service_endpoint,
                          service_type or ServiceTypes.ASSET_ACCESS,
-                         values_dict, purchase_endpoint)
+                         values, ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
 
     def get_price(self):
         """
@@ -61,14 +56,6 @@ class ServiceAgreement(Service):
         :return:
         """
         return self._service_endpoint
-
-    @property
-    def purchase_endpoint(self):
-        """
-
-        :return:
-        """
-        return self._purchase_endpoint
 
     @property
     def agreement(self):
@@ -139,19 +126,19 @@ class ServiceAgreement(Service):
         return [cond.contract_name for cond in self.conditions]
 
     @classmethod
-    def from_ddo(cls, service_definition_id, ddo):
+    def from_ddo(cls, service_type, ddo):
         """
 
-        :param service_definition_id: identifier of the service inside the asset DDO, str
+        :param service_type: identifier of the service inside the asset DDO, str
         :param ddo:
         :return:
         """
-        service_def = ddo.find_service_by_id(service_definition_id).as_dictionary()
-        if not service_def:
+        service_dict = ddo.get_service(service_type).as_dictionary()
+        if not service_dict:
             raise ValueError(
-                f'Service with definition id {service_definition_id} is not found in this DDO.')
+                f'Service of type {service_type} is not found in this DDO.')
 
-        return cls.from_service_dict(service_def)
+        return cls.from_service_dict(service_dict)
 
     @classmethod
     def from_service_dict(cls, service_dict):
@@ -161,10 +148,12 @@ class ServiceAgreement(Service):
         :return:
         """
         return cls(
-            service_dict[cls.SERVICE_DEFINITION_ID],
-            ServiceAgreementTemplate(service_dict),
+            service_dict['attributes'],
+            ServiceAgreementTemplate(service_dict['templateId'],
+                                     service_dict['attributes']['main']['name'],
+                                     service_dict['attributes']['main']['creator'],
+                                     service_dict['attributes']),
             service_dict.get(cls.SERVICE_ENDPOINT),
-            service_dict.get(cls.PURCHASE_ENDPOINT),
             service_dict.get('type')
         )
 
@@ -178,7 +167,8 @@ class ServiceAgreement(Service):
         :param timelocks:
         :param timeouts:
         :param agreement_id: id of the agreement, hex str
-        :param hash_function: reference to function that will be used to compute the hash (sha3 or similar)
+        :param hash_function: reference to function that will be used to compute the hash (sha3
+        or similar)
         :return:
         """
         return hash_function(

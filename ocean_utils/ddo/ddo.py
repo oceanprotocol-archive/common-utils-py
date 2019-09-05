@@ -3,17 +3,17 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
 
-import hashlib
 import json
 import logging
-from datetime import datetime
 
 from eth_utils import add_0x_prefix
 
+from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.ddo.public_key_base import PublicKeyBase
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_ETHEREUM_ECDSA
 from ocean_utils.did import did_to_id, OCEAN_PREFIX
+from ocean_utils.utils.utilities import get_timestamp
 from .constants import DID_DDO_CONTEXT_URL, PROOF_TYPE
 from .public_key_rsa import PUBLIC_KEY_TYPE_RSA, PublicKeyRSA
 from .service import Service
@@ -24,7 +24,7 @@ logger = logging.getLogger('ddo')
 class DDO:
     """DDO class to create, import, export, validate DDO objects."""
 
-    def __init__(self, did='', json_text=None, json_filename=None, created=None, dictionary=None):
+    def __init__(self, did=None, json_text=None, json_filename=None, created=None, dictionary=None):
         """Clear the DDO data values."""
         self._did = did
         self._public_keys = []
@@ -36,7 +36,7 @@ class DDO:
         if created:
             self._created = created
         else:
-            self._created = DDO._get_timestamp()
+            self._created = get_timestamp()
 
         if not json_text and json_filename:
             with open(json_filename, 'r') as file_handle:
@@ -76,8 +76,8 @@ class DDO:
     @property
     def metadata(self):
         """Get the metadata service."""
-        metadata_service = self.find_service_by_type(ServiceTypes.METADATA)
-        return metadata_service.values['metadata'] if metadata_service else None
+        metadata_service = self.get_service(ServiceTypes.METADATA)
+        return metadata_service.attributes if metadata_service else None
 
     @property
     def created(self):
@@ -86,7 +86,7 @@ class DDO:
     @property
     def encrypted_files(self):
         """Return encryptedFiles field in the base metadata."""
-        files = self.metadata['base']['encryptedFiles']
+        files = self.metadata['encryptedFiles']
         return files
 
     def assign_did(self, did):
@@ -97,6 +97,7 @@ class DDO:
         assert did.startswith(OCEAN_PREFIX), \
             f'"did" seems invalid, must start with {OCEAN_PREFIX} prefix.'
         self._did = did
+        return did
 
     def add_public_key(self, did, public_key):
         """
@@ -121,19 +122,19 @@ class DDO:
         logger.debug(f'Adding authentication {authentication}')
         self._authentications.append(authentication)
 
-    def add_service(self, service_type, service_endpoint=None, values=None):
+    def add_service(self, service_type, service_endpoint=None, values=None, index=None):
         """
         Add a service to the list of services on the DDO.
 
         :param service_type: Service
         :param service_endpoint: Service endpoint, str
-        :param values: Python dict with serviceDefinitionId, templateId, serviceAgreementContract,
+        :param values: Python dict with index, templateId, serviceAgreementContract,
         list of conditions and purchase endpoint.
         """
         if isinstance(service_type, Service):
             service = service_type
         else:
-            service = Service(service_endpoint, service_type, values, did=self._did)
+            service = Service(service_endpoint, service_type, values, index)
         logger.debug(f'Adding service with service type {service_type} with did {self._did}')
         self._services.append(service)
 
@@ -158,7 +159,7 @@ class DDO:
         :return: dict
         """
         if self._created is None:
-            self._created = DDO._get_timestamp()
+            self._created = get_timestamp()
 
         data = {
             '@context': DID_DDO_CONTEXT_URL,
@@ -207,26 +208,29 @@ class DDO:
             for value in values['service']:
                 if isinstance(value, str):
                     value = json.loads(value)
-                service = Service.from_json(value)
-                service.set_did(self._did)
+                if value['type'] == ServiceTypes.ASSET_ACCESS:
+                    service = ServiceAgreement.from_service_dict(value)
+                else:
+                    service = Service.from_json(value)
                 self._services.append(service)
         if 'proof' in values:
             self._proof = values['proof']
 
-    def add_proof(self, text, publisher_account, signature):
+    def add_proof(self, checksums, publisher_account):
         """Add a proof to the DDO, based on the public_key id/index and signed with the private key
-        add a static proof to the DDO, based on one of the public keys."""
+        add a static proof to the DDO, based on one of the public keys.
 
+        :param checksums: dict with the checksum of the main attributes of each service, dict
+        :param publisher_account: account of the publisher, account
+        """
         self._proof = {
             'type': PROOF_TYPE,
-            'created': DDO._get_timestamp(),
+            'created': get_timestamp(),
             'creator': publisher_account.address,
-            'signatureValue': signature,
-        }
+            'signatureValue': '',
+            'checksum': checksums
 
-    def is_proof_defined(self):
-        """Return true if a static proof exists in this DDO."""
-        return self._proof is not None
+        }
 
     def get_public_key(self, key_id):
         """Key_id can be a string, or int. If int then the index in the list of keys."""
@@ -257,41 +261,25 @@ class DDO:
                 return service
         return None
 
-    def find_service_by_id(self, service_id):
+    def get_service_by_index(self, index):
         """
-        Get service for a given service_id.
+        Get service for a given index.
 
-        :param service_id: Service id, str
+        :param index: Service id, str
         :return: Service
         """
-        service_id_key = 'serviceDefinitionId'
-        service_id = str(service_id)
-        for service in self._services:
-            if service_id_key in service.values and str(
-                    service.values[service_id_key]) == service_id:
-                return service
-
         try:
-            # If service_id is int or can be converted to int then we couldn't find it
-            int(service_id)
-            return None
+            index = int(index)
         except ValueError:
-            pass
+            logging.error(f'The index {index} can not be converted into a int')
+            return None
+
+        for service in self._services:
+            if service.index == index:
+                return service
 
         # try to find by type
-        return self.find_service_by_type(service_id)
-
-    def find_service_by_type(self, service_type):
-        """
-        Get service for a given service type.
-
-        :param service_type: Service type, ServiceType
-        :return: Service
-        """
-        for service in self._services:
-            if service_type == service.type:
-                return service
-        return None
+        return self.get_service(index)
 
     @property
     def public_keys(self):
@@ -333,28 +321,3 @@ class DDO:
 
         authentication = {'type': authentication_type, 'publicKey': key_id}
         return authentication
-
-    @staticmethod
-    def _get_timestamp():
-        """Return the current system timestamp."""
-        return f'{datetime.utcnow().replace(microsecond=0).isoformat()}Z'
-
-    @staticmethod
-    def generate_checksum(did, metadata):
-        """
-        Generation of the hash for integrity checksum.
-
-        :param did: DID, str
-        :param metadata: conforming to the Metadata accepted by Ocean Protocol, dict
-        :return: hex str, beginning with '0x'
-        """
-        files_checksum = ''
-        for file in metadata['base']['files']:
-            if 'checksum' in file:
-                files_checksum = files_checksum + file['checksum']
-        hashstr = hashlib.sha3_256((files_checksum +
-                                    metadata['base']['name'] +
-                                    metadata['base']['author'] +
-                                    metadata['base']['license'] +
-                                    did).encode('UTF-8')).hexdigest()
-        return '0x' + hashstr

@@ -48,14 +48,13 @@ class Aquarius:
         """Base URL of the aquarius instance."""
         return f'{self._base_url}/ddo'
 
-    def get_service_endpoint(self, did):
+    def get_service_endpoint(self):
         """
         Retrieve the endpoint with the ddo for a given did.
 
-        :param did: Asset DID string
         :return: Return the url of the the ddo location
         """
-        return f'{self.url}/{did}'
+        return f'{self.url}/' + '{did}'
 
     def list_assets(self):
         """
@@ -119,7 +118,7 @@ class Aquarius:
             raise ValueError(response.decode('UTF-8'))
         if parsed_response is None:
             return {}
-        return parsed_response['metadata']
+        return parsed_response['attributes']
 
     def list_assets_ddo(self):
         """

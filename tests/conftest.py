@@ -4,11 +4,11 @@ import os
 
 import pytest
 from ocean_keeper.contract_handler import ContractHandler
+from ocean_keeper.keeper import Keeper
 from ocean_keeper.web3_provider import Web3Provider
 from web3 import HTTPProvider, Web3
-from ocean_keeper.keeper import Keeper
 
-from ocean_utils.agreements.service_agreement import ServiceAgreement
+from ocean_utils.agreements.service_agreement import ServiceAgreement, ServiceTypes
 from ocean_utils.aquarius import AquariusProvider
 from ocean_utils.ddo.ddo import DDO
 from ocean_utils.did import DID
@@ -75,12 +75,10 @@ def setup_agreements_enviroment():
     publisher_acc = get_publisher_account()
     keeper = Keeper.get_instance()
 
-    service_definition_id = 'Access'
-
     ddo = get_ddo_sample()
-    ddo._did = DID.did()
+    ddo._did = DID.did({"0": "0x12341234"})
     # Remove '0x' from the start of ddo.metadata['base']['checksum']
-    text_for_sha3 = ddo.metadata['base']['checksum'][2:]
+    text_for_sha3 = ddo.metadata['main']['checksum'][2:]
     keeper.did_registry.register(
         ddo.asset_id,
         checksum=Web3.sha3(text=text_for_sha3),
@@ -91,7 +89,7 @@ def setup_agreements_enviroment():
 
     registered_ddo = ddo
     asset_id = registered_ddo.asset_id
-    service_agreement = ServiceAgreement.from_ddo(service_definition_id, ddo)
+    service_agreement = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
     agreement_id = ServiceAgreement.create_new_agreement_id()
     price = service_agreement.get_price()
     access_cond_id, lock_cond_id, escrow_cond_id = \
