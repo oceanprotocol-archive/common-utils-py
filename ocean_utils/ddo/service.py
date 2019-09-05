@@ -33,7 +33,6 @@ class Service:
                 if name not in reserved_names:
                     self._values[name] = value
 
-
     @property
     def type(self):
         """

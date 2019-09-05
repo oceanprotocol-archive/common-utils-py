@@ -6,6 +6,7 @@ import re
 
 from eth_utils import remove_0x_prefix
 from web3 import Web3
+
 from ocean_utils.utils.utilities import checksum
 
 OCEAN_PREFIX = 'did:op:'

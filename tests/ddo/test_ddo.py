@@ -151,6 +151,7 @@ def test_find_service():
 
     service = ddo.get_service(ServiceTypes.METADATA)
     assert service and service.type == ServiceTypes.METADATA, 'Failed to find service by id using ' \
+                                                              '' \
                                                               'service ' \
                                                               'type.'
     assert service.index == 0, 'index not as expected.'

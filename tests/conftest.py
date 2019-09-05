@@ -4,9 +4,9 @@ import os
 
 import pytest
 from ocean_keeper.contract_handler import ContractHandler
+from ocean_keeper.keeper import Keeper
 from ocean_keeper.web3_provider import Web3Provider
 from web3 import HTTPProvider, Web3
-from ocean_keeper.keeper import Keeper
 
 from ocean_utils.agreements.service_agreement import ServiceAgreement, ServiceTypes
 from ocean_utils.aquarius import AquariusProvider
@@ -76,7 +76,7 @@ def setup_agreements_enviroment():
     keeper = Keeper.get_instance()
 
     ddo = get_ddo_sample()
-    ddo._did = DID.did({"0":"0x12341234"})
+    ddo._did = DID.did({"0": "0x12341234"})
     # Remove '0x' from the start of ddo.metadata['base']['checksum']
     text_for_sha3 = ddo.metadata['main']['checksum'][2:]
     keeper.did_registry.register(

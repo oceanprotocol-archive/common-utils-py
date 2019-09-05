@@ -1,4 +1,3 @@
-
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
 import sqlite3
@@ -8,6 +7,7 @@ class StorageBase:
     """
     Provide basic database connection management (connect/close).
     """
+
     def __init__(self, storage_path):
         self._storage_path = storage_path
         self._conn = None
