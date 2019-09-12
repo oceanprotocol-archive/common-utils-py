@@ -60,6 +60,14 @@ class Service:
         """
         return self._service_endpoint
 
+    def set_service_endpoint(self, service_endpoint):
+        """
+        Update service endpoint. Needed to update after create did.
+
+        :param service_endpoint: Service endpoint, str
+        """
+        self._service_endpoint = service_endpoint
+
     def values(self):
         """
 

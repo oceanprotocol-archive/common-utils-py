@@ -1,6 +1,10 @@
 History
 =======
 
+0.2.1 (September 12th, 2019)
+---------------------------
+* Add setter for service endpoint.
+
 0.2.0 (September 5th, 2019)
 ---------------------------
 * Update methods to changes in the different OEP's 
