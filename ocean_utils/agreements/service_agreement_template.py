@@ -24,7 +24,6 @@ class ServiceAgreementTemplate(object):
 
         :param template_json: json dict
         """
-        # assert template_json['type'].lower() == self.DOCUMENT_TYPE, ''
         if 'template' in template_json['serviceAgreementTemplate']:
             self.template = template_json['serviceAgreementTemplate']['template']
         else:
