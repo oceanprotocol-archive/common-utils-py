@@ -185,7 +185,7 @@ class ServiceAgreement(Service):
         return generate_prefixed_id()
 
     def generate_agreement_condition_ids(self, agreement_id, asset_id, consumer_address,
-                                         publisher_address, keeper, template_type=None):
+                                         publisher_address, keeper):
         """
 
         :param agreement_id: id of the agreement, hex str
@@ -201,16 +201,19 @@ class ServiceAgreement(Service):
             self.condition_by_name['lockReward'].param_types,
             [keeper.escrow_reward_condition.address, self.get_price()]).hex()
 
-        if template_type == 'access' or template_type is None:
+        if self.type == ServiceTypes.ASSET_ACCESS:
             access_or_compute_id = keeper.access_secret_store_condition.generate_id(
-            agreement_id,
-            self.condition_by_name['accessSecretStore'].param_types,
-            [asset_id, consumer_address]).hex()
-        else:
+                agreement_id,
+                self.condition_by_name['accessSecretStore'].param_types,
+                [asset_id, consumer_address]).hex()
+        elif self.type == ServiceTypes.CLOUD_COMPUTE:
             access_or_compute_id = keeper.compute_execution_condition.generate_id(
                 agreement_id,
                 self.condition_by_name['execCompute'].param_types,
                 [asset_id, consumer_address]).hex()
+        else:
+            raise Exception(
+                'Error generating the condition ids, the service_agreement type is not valid.')
 
         escrow_cond_id = keeper.escrow_reward_condition.generate_id(
             agreement_id,
