@@ -219,7 +219,7 @@ class ServiceFactory(object):
 
     @staticmethod
     def complete_compute_service(did, service_endpoint, attributes, template_id,
-                                reward_contract_address):
+                                 reward_contract_address):
         """
         Build the access service.
 

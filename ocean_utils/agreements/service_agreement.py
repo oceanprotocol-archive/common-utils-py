@@ -15,6 +15,7 @@ class ServiceAgreement(Service):
     """Class representing a Service Agreement."""
     SERVICE_INDEX = 'index'
     AGREEMENT_TEMPLATE = 'serviceAgreementTemplate'
+    SERVICE_ATTRIBUTES = 'attributes'
     SERVICE_CONDITIONS = 'conditions'
     SERVICE_ENDPOINT = 'serviceEndpoint'
 
@@ -30,9 +31,10 @@ class ServiceAgreement(Service):
         self.service_agreement_template = service_agreement_template
         values = dict()
         values[ServiceAgreementTemplate.TEMPLATE_ID_KEY] = self.template_id
-        values['attributes'] = dict()
-        values['attributes'] = attributes
-        values['attributes']['serviceAgreementTemplate'] = service_agreement_template.__dict__
+        values[self.SERVICE_ATTRIBUTES] = dict()
+        values[self.SERVICE_ATTRIBUTES] = attributes
+        values[self.SERVICE_ATTRIBUTES][
+            self.AGREEMENT_TEMPLATE] = service_agreement_template.__dict__
 
         Service.__init__(self, service_endpoint,
                          service_type or ServiceTypes.ASSET_ACCESS,
@@ -148,11 +150,11 @@ class ServiceAgreement(Service):
         :return:
         """
         return cls(
-            service_dict['attributes'],
+            service_dict[cls.SERVICE_ATTRIBUTES],
             ServiceAgreementTemplate(service_dict['templateId'],
-                                     service_dict['attributes']['main']['name'],
-                                     service_dict['attributes']['main']['creator'],
-                                     service_dict['attributes']),
+                                     service_dict[cls.SERVICE_ATTRIBUTES]['main']['name'],
+                                     service_dict[cls.SERVICE_ATTRIBUTES]['main']['creator'],
+                                     service_dict[cls.SERVICE_ATTRIBUTES]),
             service_dict.get(cls.SERVICE_ENDPOINT),
             service_dict.get('type')
         )
