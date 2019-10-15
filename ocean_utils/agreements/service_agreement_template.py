@@ -2,12 +2,10 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 from ocean_utils.agreements.service_agreement_condition import Event, ServiceAgreementCondition
-from ocean_utils.agreements.service_types import ServiceTypes
 
 
 class ServiceAgreementTemplate(object):
     """Class representing a Service Agreement Template."""
-    DOCUMENT_TYPE = ServiceTypes.ASSET_ACCESS
     TEMPLATE_ID_KEY = 'templateId'
 
     def __init__(self, template_id=None, name=None, creator=None, template_json=None):
@@ -24,7 +22,6 @@ class ServiceAgreementTemplate(object):
 
         :param template_json: json dict
         """
-        # assert template_json['type'].lower() == self.DOCUMENT_TYPE, ''
         if 'template' in template_json['serviceAgreementTemplate']:
             self.template = template_json['serviceAgreementTemplate']['template']
         else:

@@ -1,6 +1,10 @@
 History
 =======
 
+0.2.2 (October 15th, 2019)
+-------------------------
+* Add compute template
+
 0.2.1 (September 12th, 2019)
 ---------------------------
 * Add setter for service endpoint.

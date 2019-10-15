@@ -216,3 +216,42 @@ class ServiceFactory(object):
             ServiceTypes.ASSET_ACCESS
         )
         return sa
+
+    @staticmethod
+    def complete_compute_service(did, service_endpoint, attributes, template_id,
+                                 reward_contract_address):
+        """
+        Build the access service.
+
+        :param did: DID, str
+        :param service_endpoint: identifier of the service inside the asset DDO, str
+        :param template_id: id of the template use to create the service, str
+        :param reward_contract_address: hex str ethereum address of deployed reward condition
+            smart contract
+        :return: ServiceAgreement
+        """
+        param_map = {
+            '_documentId': did_to_id(did),
+            '_amount': attributes['main']['price'],
+            '_rewardAddress': reward_contract_address
+        }
+        sla_template_dict = get_sla_template(ServiceTypes.CLOUD_COMPUTE)
+        sla_template = ServiceAgreementTemplate(template_id, ServiceTypes.CLOUD_COMPUTE,
+                                                attributes['main']['creator'], sla_template_dict)
+        sla_template.template_id = template_id
+        conditions = sla_template.conditions[:]
+        for cond in conditions:
+            for param in cond.parameters:
+                param.value = param_map.get(param.name, '')
+
+            if cond.timeout > 0:
+                cond.timeout = attributes['main']['timeout']
+
+        sla_template.set_conditions(conditions)
+        sa = ServiceAgreement(
+            attributes,
+            sla_template,
+            service_endpoint,
+            ServiceTypes.CLOUD_COMPUTE
+        )
+        return sa

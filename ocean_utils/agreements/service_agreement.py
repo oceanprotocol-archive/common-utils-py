@@ -15,6 +15,7 @@ class ServiceAgreement(Service):
     """Class representing a Service Agreement."""
     SERVICE_INDEX = 'index'
     AGREEMENT_TEMPLATE = 'serviceAgreementTemplate'
+    SERVICE_ATTRIBUTES = 'attributes'
     SERVICE_CONDITIONS = 'conditions'
     SERVICE_ENDPOINT = 'serviceEndpoint'
 
@@ -30,9 +31,10 @@ class ServiceAgreement(Service):
         self.service_agreement_template = service_agreement_template
         values = dict()
         values[ServiceAgreementTemplate.TEMPLATE_ID_KEY] = self.template_id
-        values['attributes'] = dict()
-        values['attributes'] = attributes
-        values['attributes']['serviceAgreementTemplate'] = service_agreement_template.__dict__
+        values[self.SERVICE_ATTRIBUTES] = dict()
+        values[self.SERVICE_ATTRIBUTES] = attributes
+        values[self.SERVICE_ATTRIBUTES][
+            self.AGREEMENT_TEMPLATE] = service_agreement_template.__dict__
 
         Service.__init__(self, service_endpoint,
                          service_type or ServiceTypes.ASSET_ACCESS,
@@ -148,11 +150,11 @@ class ServiceAgreement(Service):
         :return:
         """
         return cls(
-            service_dict['attributes'],
+            service_dict[cls.SERVICE_ATTRIBUTES],
             ServiceAgreementTemplate(service_dict['templateId'],
-                                     service_dict['attributes']['main']['name'],
-                                     service_dict['attributes']['main']['creator'],
-                                     service_dict['attributes']),
+                                     service_dict[cls.SERVICE_ATTRIBUTES]['main']['name'],
+                                     service_dict[cls.SERVICE_ATTRIBUTES]['main']['creator'],
+                                     service_dict[cls.SERVICE_ATTRIBUTES]),
             service_dict.get(cls.SERVICE_ENDPOINT),
             service_dict.get('type')
         )
@@ -193,6 +195,7 @@ class ServiceAgreement(Service):
         :param consumer_address: ethereum account address of consumer, hex str
         :param publisher_address: ethereum account address of publisher, hex str
         :param keeper:
+        :param template_type: type of template, currently only access and compute are supported
         :return:
         """
         lock_cond_id = keeper.lock_reward_condition.generate_id(
@@ -200,18 +203,27 @@ class ServiceAgreement(Service):
             self.condition_by_name['lockReward'].param_types,
             [keeper.escrow_reward_condition.address, self.get_price()]).hex()
 
-        access_cond_id = keeper.access_secret_store_condition.generate_id(
-            agreement_id,
-            self.condition_by_name['accessSecretStore'].param_types,
-            [asset_id, consumer_address]).hex()
+        if self.type == ServiceTypes.ASSET_ACCESS:
+            access_or_compute_id = keeper.access_secret_store_condition.generate_id(
+                agreement_id,
+                self.condition_by_name['accessSecretStore'].param_types,
+                [asset_id, consumer_address]).hex()
+        elif self.type == ServiceTypes.CLOUD_COMPUTE:
+            access_or_compute_id = keeper.compute_execution_condition.generate_id(
+                agreement_id,
+                self.condition_by_name['execCompute'].param_types,
+                [asset_id, consumer_address]).hex()
+        else:
+            raise Exception(
+                'Error generating the condition ids, the service_agreement type is not valid.')
 
         escrow_cond_id = keeper.escrow_reward_condition.generate_id(
             agreement_id,
             self.condition_by_name['escrowReward'].param_types,
             [self.get_price(), publisher_address, consumer_address,
-             lock_cond_id, access_cond_id]).hex()
+             lock_cond_id, access_or_compute_id]).hex()
 
-        return access_cond_id, lock_cond_id, escrow_cond_id
+        return access_or_compute_id, lock_cond_id, escrow_cond_id
 
     def get_service_agreement_hash(
             self, agreement_id, asset_id, consumer_address, publisher_address, keeper):
