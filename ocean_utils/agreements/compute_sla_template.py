@@ -65,7 +65,7 @@ COMPUTE_SLA_TEMPLATE = {
             "name": "execCompute",
             "timelock": 0,
             "timeout": 0,
-            "contractName": "ExecComputeCondition",
+            "contractName": "ComputeExecutionCondition",
             "functionName": "fulfill",
             "parameters": [
                 {
