@@ -1,6 +1,10 @@
 History
 =======
 
+0.2.3 (October 22nd, 2019)
+-------------------------
+* Fix compute template
+
 0.2.2 (October 15th, 2019)
 -------------------------
 * Add compute template
