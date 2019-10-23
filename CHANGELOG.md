@@ -1,7 +1,11 @@
 History
 =======
 
-0.2.3 (October 23rd, 2019)
+0.2.5 (October 23rd, 2019)
+-------------------------
+* Fix bug in metadata index
+
+0.2.4 (October 23rd, 2019)
 -------------------------
 * Fix index number in service agreements
 

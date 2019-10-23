@@ -79,11 +79,10 @@ class ServiceFactory(object):
         :return: List of Services
         """
         services = []
-        sa_def_key = ServiceAgreement.SERVICE_INDEX
         for i, service_desc in enumerate(service_descriptors):
             service = ServiceFactory.build_service(service_desc)
             # set index for each service
-            service.update_value(sa_def_key, str(i))
+            service.update_value(ServiceAgreement.SERVICE_INDEX, int(i))
             services.append(service)
 
         return services
