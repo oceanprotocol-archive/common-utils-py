@@ -1,6 +1,10 @@
 History
 =======
 
+0.2.3 (October 23rd, 2019)
+-------------------------
+* Fix index number in service agreements
+
 0.2.3 (October 22nd, 2019)
 -------------------------
 * Fix compute template
