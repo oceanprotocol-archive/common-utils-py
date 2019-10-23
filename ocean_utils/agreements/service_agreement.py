@@ -31,14 +31,21 @@ class ServiceAgreement(Service):
         self.service_agreement_template = service_agreement_template
         values = dict()
         values[ServiceAgreementTemplate.TEMPLATE_ID_KEY] = self.template_id
-        values[self.SERVICE_ATTRIBUTES] = dict()
-        values[self.SERVICE_ATTRIBUTES] = attributes
-        values[self.SERVICE_ATTRIBUTES][
-            self.AGREEMENT_TEMPLATE] = service_agreement_template.__dict__
-
-        Service.__init__(self, service_endpoint,
-                         service_type or ServiceTypes.ASSET_ACCESS,
-                         values, ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
+        values['attributes'] = dict()
+        values['attributes'] = attributes
+        values['attributes']['serviceAgreementTemplate'] = service_agreement_template.__dict__
+        if service_type == ServiceTypes.ASSET_ACCESS:
+            values['index'] = ServiceTypesIndices.DEFAULT_ACCESS_INDEX
+            Service.__init__(self, service_endpoint,
+                             ServiceTypes.ASSET_ACCESS,
+                             values, ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
+        elif service_type == ServiceTypes.CLOUD_COMPUTE:
+            values['index'] = ServiceTypesIndices.DEFAULT_COMPUTING_INDEX
+            Service.__init__(self, service_endpoint,
+                             ServiceTypes.CLOUD_COMPUTE,
+                             values, ServiceTypesIndices.DEFAULT_COMPUTING_INDEX)
+        else:
+            raise ValueError(f'The service_type {service_type} is not currently supported.')
 
     def get_price(self):
         """
