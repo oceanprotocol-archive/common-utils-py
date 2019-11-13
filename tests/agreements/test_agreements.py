@@ -13,7 +13,7 @@ from tests.resources.tiers import e2e_test
 
 
 @e2e_test
-def test_escrow_access_secret_store_template_flow(setup_agreements_enviroment):
+def test_escrow_access_secret_store_template_flow(setup_agreements_environment):
     """Test the agreement flow according to the EscrowAccessSecretStoreTemplate."""
     (
         keeper,
@@ -25,7 +25,7 @@ def test_escrow_access_secret_store_template_flow(setup_agreements_enviroment):
         service_agreement,
         (lock_cond_id, access_cond_id, escrow_cond_id),
 
-    ) = setup_agreements_enviroment
+    ) = setup_agreements_environment
 
     print('creating agreement:'
           'agrId: ', agreement_id,
@@ -188,6 +188,7 @@ def test_agreement():
     )
 
     print({signature})
-    assert signature == Web3.toBytes(
-        hexstr="0x67901517c18a3d23e05806fff7f04235cc8ae3b1f82345b8bfb3e4b02b5800c7"), \
-        "The signature is not correct."
+    assert (
+        signature == Web3.toBytes(
+            hexstr="0x67901517c18a3d23e05806fff7f04235cc8ae3b1f82345b8bfb3e4b02b5800c7"
+        )), "The signature is not correct."
