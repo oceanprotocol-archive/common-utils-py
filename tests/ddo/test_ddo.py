@@ -77,8 +77,11 @@ def test_creating_ddo_from_scratch():
 @unit_test
 def test_create_auth_from_json():
     auth = {'publicKey': '0x00000', 'type': 'auth-type', 'nothing': ''}
-    assert DDO.create_authentication_from_json(auth) == \
-           {'publicKey': '0x00000', 'type': 'auth-type'}
+    assert (
+        DDO.create_authentication_from_json(auth)
+        ==
+        {'publicKey': '0x00000', 'type': 'auth-type'}
+    )
     with pytest.raises(ValueError):
         DDO.create_authentication_from_json({'type': 'auth-type'})
 

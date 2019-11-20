@@ -70,18 +70,16 @@ def metadata():
 
 
 @pytest.fixture
-def setup_agreements_enviroment():
+def setup_agreements_environment():
     consumer_acc = get_consumer_account()
     publisher_acc = get_publisher_account()
     keeper = Keeper.get_instance()
 
     ddo = get_ddo_sample()
     ddo._did = DID.did({"0": "0x12341234"})
-    # Remove '0x' from the start of ddo.metadata['base']['checksum']
-    text_for_sha3 = ddo.metadata['main']['checksum'][2:]
     keeper.did_registry.register(
         ddo.asset_id,
-        checksum=Web3.sha3(text=text_for_sha3),
+        checksum=Web3Provider.get_web3().toBytes(hexstr=ddo.asset_id),
         url='aquarius:5000',
         account=publisher_acc,
         providers=None
@@ -92,10 +90,11 @@ def setup_agreements_enviroment():
     service_agreement = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
     agreement_id = ServiceAgreement.create_new_agreement_id()
     price = service_agreement.get_price()
-    access_cond_id, lock_cond_id, escrow_cond_id = \
-        service_agreement.generate_agreement_condition_ids(
+    (access_cond_id,
+     lock_cond_id,
+     escrow_cond_id) = service_agreement.generate_agreement_condition_ids(
             agreement_id, asset_id, consumer_acc.address, publisher_acc.address, keeper
-        )
+    )
 
     return (
         keeper,

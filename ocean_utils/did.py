@@ -112,5 +112,6 @@ def did_to_id_bytes(did):
         id_bytes = did
     else:
         raise TypeError(
-            f'Unknown did format, expected str or bytes, got {did} of type {type(did)}')
+            f'Unknown did format, expected str or bytes, got {did} of type {type(did)}'
+        )
     return id_bytes

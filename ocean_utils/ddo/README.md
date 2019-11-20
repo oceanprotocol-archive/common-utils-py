@@ -21,7 +21,7 @@ from did_ddo_lib import OceanDDO
 
 Create a DDO object using a DID
 ```python
-ddo = OceanDDO(did)
+ddo = DDO(did)
 ```
 
 Generate a signature and embedded in the authentication message, return the private key
