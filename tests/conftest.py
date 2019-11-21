@@ -34,9 +34,9 @@ def get_keeper_url():
 
 @pytest.fixture(autouse=True)
 def setup_all():
-    Web3Provider.get_web3('http://localhost:8545')
-    ContractHandler.artifacts_path = os.path.expanduser('~/.ocean/keeper-contracts/artifacts')
-    Keeper.get_instance(artifacts_path=ContractHandler.artifacts_path)
+    Web3Provider.init_web3('http://localhost:8545')
+    ContractHandler.set_artifacts_path(os.path.expanduser('~/.ocean/keeper-contracts/artifacts'))
+    Keeper.get_instance()
 
 
 @pytest.fixture
