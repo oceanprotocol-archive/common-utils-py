@@ -185,6 +185,8 @@ class ServiceFactory(object):
 
         :param did: DID, str
         :param service_endpoint: identifier of the service inside the asset DDO, str
+        :param attributes: dict of main attributes in the service including `main` and
+            optionally `additionalInformation`
         :param template_id: id of the template use to create the service, str
         :param reward_contract_address: hex str ethereum address of deployed reward condition
             smart contract
@@ -196,8 +198,10 @@ class ServiceFactory(object):
             '_rewardAddress': reward_contract_address
         }
         sla_template_dict = get_sla_template()
-        sla_template = ServiceAgreementTemplate(template_id, ServiceTypes.ASSET_ACCESS,
-                                                attributes['main']['creator'], sla_template_dict)
+        sla_template = ServiceAgreementTemplate(
+            template_id, 'dataAssetAccessServiceAgreement',
+            attributes['main']['creator'], sla_template_dict
+        )
         sla_template.template_id = template_id
         conditions = sla_template.conditions[:]
         for cond in conditions:
@@ -212,7 +216,8 @@ class ServiceFactory(object):
             attributes,
             sla_template,
             service_endpoint,
-            ServiceTypes.ASSET_ACCESS
+            ServiceTypes.ASSET_ACCESS,
+            ServiceTypesIndices.DEFAULT_ACCESS_INDEX
         )
         return sa
 
@@ -251,6 +256,7 @@ class ServiceFactory(object):
             attributes,
             sla_template,
             service_endpoint,
-            ServiceTypes.CLOUD_COMPUTE
+            ServiceTypes.CLOUD_COMPUTE,
+            ServiceTypesIndices.DEFAULT_COMPUTING_INDEX
         )
         return sa

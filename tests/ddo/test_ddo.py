@@ -118,6 +118,9 @@ def test_load_ddo_json():
     assert service
     assert service.type == ServiceTypes.METADATA
     assert service.attributes
+    assert this_ddo.as_dictionary() == sample_ddo_json_dict, \
+        f'ddo seems to have changed after being loaded into DDO object: \n' \
+        f'{this_ddo.as_text()} vs. {sample_ddo_json_string}'
 
 
 @unit_test

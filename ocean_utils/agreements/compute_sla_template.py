@@ -1,5 +1,5 @@
 COMPUTE_SLA_TEMPLATE = {
-  "type": "Compute",
+  "type": "compute",
   "templateId": "",
   "name": "dataAssetComputeExecutionAgreement",
   "description": "",
