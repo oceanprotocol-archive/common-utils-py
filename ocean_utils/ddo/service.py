@@ -151,7 +151,7 @@ class Service:
     @classmethod
     def from_json(cls, service_dict):
         """Create a service object from a JSON string."""
-        service_endpoint, _type, _index, _attributes, sd = cls.parse_json(service_dict)
+        service_endpoint, _type, _index, _attributes, sd = cls._parse_json(service_dict)
         return cls(
             service_endpoint,
             _type,
