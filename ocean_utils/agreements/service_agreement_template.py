@@ -1,5 +1,6 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
+import copy
 
 from ocean_utils.agreements.service_agreement_condition import Event, ServiceAgreementCondition
 
@@ -14,7 +15,7 @@ class ServiceAgreementTemplate(object):
         self.creator = creator
         self.template = {}
         if template_json:
-            self.parse_template_json(template_json)
+            self.parse_template_json(copy.deepcopy(template_json))
 
     def parse_template_json(self, template_json):
         """
@@ -22,10 +23,10 @@ class ServiceAgreementTemplate(object):
 
         :param template_json: json dict
         """
-        if 'template' in template_json['serviceAgreementTemplate']:
-            self.template = template_json['serviceAgreementTemplate']['template']
-        else:
-            self.template = template_json['serviceAgreementTemplate']
+        if 'template' in template_json:
+            template_json = template_json.pop('template')
+
+        self.template = template_json
 
     def set_template_id(self, template_id):
         """
@@ -67,7 +68,7 @@ class ServiceAgreementTemplate(object):
         """
         List of agreements events.
 
-        :return: list
+        :return: list of Event instances
         """
         return [Event(e) for e in self.template['events']]
 
@@ -76,7 +77,7 @@ class ServiceAgreementTemplate(object):
         """
         List of conditions.
 
-        :return: list
+        :return: list of ServiceAgreementCondition instances
         """
         return [
             ServiceAgreementCondition(cond_json) for cond_json in self.template['conditions']
@@ -86,7 +87,7 @@ class ServiceAgreementTemplate(object):
         """
         Set the conditions of the template.
 
-        :param conditions: list of conditions.
+        :param conditions: list of ServiceAgreementCondition instances.
         """
         self.template['conditions'] = [cond.as_dictionary() for cond in conditions]
 
@@ -117,15 +118,15 @@ class ServiceAgreementTemplate(object):
         :return: dict
         """
         template = {
-            'contractName': self.contract_name,
-            'events': [e.as_dictionary() for e in self.agreement_events],
-            'fulfillmentOrder': self.fulfillment_order,
-            'conditionDependency': self.condition_dependency,
-            'conditions': [cond.as_dictionary() for cond in self.conditions]
-        }
-        return {
-            # 'type': self.DOCUMENT_TYPE,
             'name': self.name,
             'creator': self.creator,
-            'serviceAgreementTemplate': template
+            'serviceAgreementTemplate': {
+                'contractName': self.contract_name,
+                'events': [e.as_dictionary() for e in self.agreement_events],
+                'fulfillmentOrder': self.fulfillment_order,
+                'conditionDependency': self.condition_dependency,
+                'conditions': [cond.as_dictionary() for cond in self.conditions]
+            }
         }
+
+        return template

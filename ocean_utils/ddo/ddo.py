@@ -2,7 +2,7 @@
 
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
-
+import copy
 import json
 import logging
 
@@ -32,6 +32,7 @@ class DDO:
         self._services = []
         self._proof = None
         self._created = None
+        self._other_values = {}
 
         if created:
             self._created = created
@@ -134,7 +135,8 @@ class DDO:
         if isinstance(service_type, Service):
             service = service_type
         else:
-            service = Service(service_endpoint, service_type, values, index)
+            values = copy.deepcopy(values) if values else {}
+            service = Service(service_endpoint, service_type, values.pop('attributes', None), values, index)
         logger.debug(f'Adding service with service type {service_type} with did {self._did}')
         self._services.append(service)
 
@@ -184,39 +186,47 @@ class DDO:
         if self._proof and is_proof:
             data['proof'] = self._proof
 
+        if self._other_values:
+            data.update(self._other_values)
+
         return data
 
     def _read_dict(self, dictionary):
         """Import a JSON dict into this DDO."""
-        values = dictionary
-        self._did = values['id']
-        self._created = values.get('created', None)
+        values = copy.deepcopy(dictionary)
+        self._did = values.pop('id')
+        self._created = values.pop('created', None)
+
         if 'publicKey' in values:
             self._public_keys = []
-            for value in values['publicKey']:
+            for value in values.pop('publicKey'):
                 if isinstance(value, str):
                     value = json.loads(value)
                 self._public_keys.append(DDO.create_public_key_from_json(value))
         if 'authentication' in values:
             self._authentications = []
-            for value in values['authentication']:
+            for value in values.pop('authentication'):
                 if isinstance(value, str):
                     value = json.loads(value)
                 self._authentications.append(DDO.create_authentication_from_json(value))
         if 'service' in values:
             self._services = []
-            for value in values['service']:
+            for value in values.pop('service'):
                 if isinstance(value, str):
                     value = json.loads(value)
+
                 if value['type'] == ServiceTypes.ASSET_ACCESS:
-                    service = ServiceAgreement.from_service_dict(value)
+                    service = ServiceAgreement.from_json(value)
                 elif value['type'] == ServiceTypes.CLOUD_COMPUTE:
-                    service = ServiceAgreement.from_service_dict(value)
+                    service = ServiceAgreement.from_json(value)
                 else:
                     service = Service.from_json(value)
+
                 self._services.append(service)
         if 'proof' in values:
-            self._proof = values['proof']
+            self._proof = values.pop('proof')
+
+        self._other_values = values
 
     def add_proof(self, checksums, publisher_account):
         """Add a proof to the DDO, based on the public_key id/index and signed with the private key
