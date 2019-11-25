@@ -16,8 +16,8 @@ def get_sla_template(service_type=ServiceTypes.ASSET_ACCESS):
     :return: template dict
     """
     if service_type == ServiceTypes.ASSET_ACCESS:
-        return ACCESS_SLA_TEMPLATE.copy()
+        return ACCESS_SLA_TEMPLATE['serviceAgreementTemplate'].copy()
     elif service_type == ServiceTypes.CLOUD_COMPUTE:
-        return COMPUTE_SLA_TEMPLATE.copy()
+        return COMPUTE_SLA_TEMPLATE['serviceAgreementTemplate'].copy()
     else:
         raise ValueError(f'Invalid/unsupported service agreement type {service_type}')

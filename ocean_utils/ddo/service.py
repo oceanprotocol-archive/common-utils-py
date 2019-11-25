@@ -22,7 +22,7 @@ class Service:
     SERVICE_INDEX = 'index'
     SERVICE_ATTRIBUTES = 'attributes'
 
-    def __init__(self, service_endpoint, service_type, attributes, other_values, index=None):
+    def __init__(self, service_endpoint, service_type, attributes, other_values=None, index=None):
         """Initialize Service instance."""
         self._service_endpoint = service_endpoint
         self._type = service_type or ''

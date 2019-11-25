@@ -85,6 +85,8 @@ class ServiceAgreement(Service):
     def as_dictionary(self):
         values = Service.as_dictionary(self)
         values[ServiceAgreementTemplate.TEMPLATE_ID_KEY] = self.template_id
+        attributes = values[ServiceAgreement.SERVICE_ATTRIBUTES]
+        attributes[ServiceAgreement.AGREEMENT_TEMPLATE] = self.service_agreement_template.template
         return values
 
     def get_price(self):
