@@ -9,7 +9,8 @@ import json
 import pytest
 from ocean_keeper import Keeper
 
-from ocean_utils.agreements.service_agreement import ServiceTypes
+from ocean_utils.agreements.service_agreement import ServiceTypes, ServiceAgreement
+from ocean_utils.agreements.service_factory import ServiceDescriptor, ServiceFactory
 from ocean_utils.ddo.ddo import DDO
 from ocean_utils.ddo.public_key_base import PublicKeyBase
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_ETHEREUM_ECDSA, PUBLIC_KEY_TYPE_RSA
@@ -21,6 +22,15 @@ from tests.resources.tiers import unit_test
 
 TEST_SERVICE_TYPE = 'ocean-meta-storage'
 TEST_SERVICE_URL = 'http://localhost:8005'
+
+
+def _get_sample_ddo(name):
+    sample_ddo_path = get_resource_path('ddo', name)
+    assert sample_ddo_path.exists(), f'{sample_ddo_path} does not exist!'
+    with open(sample_ddo_path) as f:
+        sample_ddo_json_dict = json.load(f)
+
+    return sample_ddo_json_dict
 
 
 def test_create_ddo(metadata):
@@ -106,11 +116,7 @@ def test_create_public_key_from_json():
 @unit_test
 def test_load_ddo_json():
     # TODO: Fix
-    sample_ddo_path = get_resource_path('ddo', 'ddo_sample1.json')
-    assert sample_ddo_path.exists(), f'{sample_ddo_path} does not exist!'
-    with open(sample_ddo_path) as f:
-        sample_ddo_json_dict = json.load(f)
-
+    sample_ddo_json_dict = _get_sample_ddo('ddo_sample1.json')
     sample_ddo_json_string = json.dumps(sample_ddo_json_dict)
 
     this_ddo = DDO(json_text=sample_ddo_json_string)
@@ -161,3 +167,29 @@ def test_find_service():
                                                               'service ' \
                                                               'type.'
     assert service.index == 0, 'index not as expected.'
+
+
+@unit_test
+def test_service_factory():
+    ddo = DDO(dictionary=_get_sample_ddo('ddo_sample1.json'))
+    type_to_service = {s.type: s for s in ddo.services}
+    metadata = ddo.metadata
+
+    md_descriptor = ServiceDescriptor.metadata_service_descriptor(metadata, type_to_service[ServiceTypes.METADATA].service_endpoint)
+    access_service = type_to_service[ServiceTypes.ASSET_ACCESS]
+    access_descriptor = ServiceDescriptor.access_service_descriptor(access_service.attributes, access_service.service_endpoint)
+    compute_descriptor = ServiceDescriptor.compute_service_descriptor(access_service.attributes, access_service.service_endpoint)
+
+    services = ServiceFactory.build_services([md_descriptor, access_descriptor, compute_descriptor])
+    assert len(services) == 3
+    assert services[0].type == ServiceTypes.METADATA
+    assert services[1].type == ServiceTypes.ASSET_ACCESS
+    assert services[2].type == ServiceTypes.CLOUD_COMPUTE
+
+    s = services[1]
+    _access_service = ServiceFactory.complete_access_service(ddo.did, s.service_endpoint, s.attributes, access_service.template_id, '0x010101')
+    s = services[2]
+    _compute_service = ServiceFactory.complete_compute_service(ddo.did, s.service_endpoint, s.attributes, access_service.template_id, '0x010101')
+
+    assert isinstance(_access_service, ServiceAgreement)
+    assert isinstance(_compute_service, ServiceAgreement)
