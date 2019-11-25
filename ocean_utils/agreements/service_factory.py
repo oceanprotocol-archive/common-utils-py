@@ -134,7 +134,7 @@ class ServiceFactory(object):
         """
         return Service(service_endpoint,
                        ServiceTypes.METADATA,
-                       values={'attributes': metadata},
+                       attributes=metadata,
                        index=ServiceTypesIndices.DEFAULT_METADATA_INDEX
                        )
 
@@ -148,7 +148,7 @@ class ServiceFactory(object):
         :return: Service
         """
         return Service(service_endpoint, ServiceTypes.AUTHORIZATION,
-                       values={'attributes': attributes},
+                       attributes=attributes,
                        index=ServiceTypesIndices.DEFAULT_AUTHORIZATION_INDEX)
 
     @staticmethod
@@ -161,7 +161,7 @@ class ServiceFactory(object):
         :return: Service
         """
         return Service(service_endpoint, ServiceTypes.ASSET_ACCESS,
-                       values={'attributes': attributes},
+                       attributes=attributes,
                        index=ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
 
     @staticmethod
@@ -174,7 +174,7 @@ class ServiceFactory(object):
         :return: Service
         """
         return Service(service_endpoint, ServiceTypes.CLOUD_COMPUTE,
-                       values={'attributes': attributes},
+                       attributes=attributes,
                        index=ServiceTypesIndices.DEFAULT_COMPUTING_INDEX)
 
     @staticmethod
@@ -240,7 +240,7 @@ class ServiceFactory(object):
             '_rewardAddress': reward_contract_address
         }
         sla_template_dict = get_sla_template(ServiceTypes.CLOUD_COMPUTE)
-        sla_template = ServiceAgreementTemplate(template_id, ServiceTypes.CLOUD_COMPUTE,
+        sla_template = ServiceAgreementTemplate(template_id, 'dataComputeServiceAgreement',
                                                 attributes['main']['creator'], sla_template_dict)
         sla_template.template_id = template_id
         conditions = sla_template.conditions[:]
