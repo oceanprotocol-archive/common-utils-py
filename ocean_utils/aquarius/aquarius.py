@@ -139,8 +139,8 @@ class Aquarius:
             asset_did = ddo.did
             response = self.requests_session.post(self.url, data=ddo.as_text(),
                                                   headers=self._headers)
-        except AttributeError:
-            raise AttributeError('DDO invalid. Review that all the required parameters are filled.')
+        except AttributeError as e:
+            raise AttributeError(f'DDO invalid. Review that all the required parameters are filled: {e}')
         if response.status_code == 500:
             raise ValueError(
                 f'This Asset ID already exists! \n\tHTTP Error message: \n\t\t{response.text}')
