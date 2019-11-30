@@ -4,7 +4,9 @@ from collections import namedtuple
 
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
 from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndices
+from ocean_utils.agreements.utils import get_sla_template
 from ocean_utils.ddo.service import Service
+from ocean_utils.did import did_to_id
 from ocean_utils.utils.utilities import generate_prefixed_id
 
 Agreement = namedtuple('Agreement', ('template', 'conditions'))
@@ -88,6 +90,35 @@ class ServiceAgreement(Service):
         attributes = values[ServiceAgreement.SERVICE_ATTRIBUTES]
         attributes[ServiceAgreement.AGREEMENT_TEMPLATE] = self.service_agreement_template.template
         return values
+
+    def _get_condition_param_map(self, keeper):
+        template_contract = keeper.get_contract(self.service_agreement_template.contract_name)
+        condition_contracts = [keeper.get_contract_by_address(cond_address)
+                               for cond_address in template_contract.get_condition_types()]
+        condition_to_args = dict()
+        for cc in condition_contracts:
+            condition_to_args[cc.CONTRACT_NAME] = [i['name'] for i in cc.contract.functions.get('fulfill')['inputs']]
+
+        return condition_to_args
+
+    def init_conditions_values(self, keeper, did, contract_name_to_address):
+        cond_to_params = self._get_condition_param_map(keeper)
+        param_map = {
+            '_documentId': did_to_id(did),
+            '_amount': self.attributes['main']['price'],
+            '_rewardAddress': contract_name_to_address['EscrowReward']
+        }
+        conditions = self.conditions[:]
+        for cond in conditions:
+            params = set(cond_to_params[cond.contract_name])
+            for param in cond.parameters:
+                assert param.name in params, f'param does not match any of the abi params {params}'
+                param.value = param_map.get(param.name, '')
+
+            if cond.timeout > 0:
+                cond.timeout = self.attributes['main']['timeout']
+
+        self.service_agreement_template.set_conditions(conditions)
 
     def get_price(self):
         """
