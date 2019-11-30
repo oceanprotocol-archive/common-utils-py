@@ -37,31 +37,37 @@ class ServiceDescriptor(object):
                 {'attributes': {'main': {}}, 'serviceEndpoint': service_endpoint})
 
     @staticmethod
-    def access_service_descriptor(attributes, service_endpoint):
+    def access_service_descriptor(attributes, service_endpoint, template_id):
         """
         Access service descriptor.
 
         :param attributes: attributes of the access service, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
+        :param template_id:
         :return: Service descriptor.
         """
         return (
             ServiceTypes.ASSET_ACCESS,
-            {'attributes': attributes, 'serviceEndpoint': service_endpoint}
+            {'attributes': attributes,
+             'serviceEndpoint': service_endpoint,
+             'templateId': template_id}
         )
 
     @staticmethod
-    def compute_service_descriptor(attributes, service_endpoint):
+    def compute_service_descriptor(attributes, service_endpoint, template_id):
         """
         Compute service descriptor.
 
         :param attributes: attributes of the compute service, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
+        :param template_id:
         :return: Service descriptor.
         """
         return (
             ServiceTypes.CLOUD_COMPUTE,
-            {'attributes': attributes, 'serviceEndpoint': service_endpoint}
+            {'attributes': attributes,
+             'serviceEndpoint': service_endpoint,
+             'templateId': template_id}
         )
 
 
@@ -114,7 +120,8 @@ class ServiceFactory(object):
         elif service_type == ServiceTypes.ASSET_ACCESS:
             return ServiceFactory.build_access_service(
                 kwargs['attributes'],
-                kwargs['serviceEndpoint']
+                kwargs['serviceEndpoint'],
+                kwargs['templateId']
             )
         elif service_type == ServiceTypes.CLOUD_COMPUTE:
             return ServiceFactory.build_compute_service(
