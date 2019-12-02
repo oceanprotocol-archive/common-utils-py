@@ -101,12 +101,7 @@ class ServiceAgreement(Service):
 
         return condition_to_args
 
-    def init_conditions_values(self, keeper, did, contract_name_to_address):
-        try:
-            cond_to_params = self._get_condition_param_map(keeper)
-        except {Exception, KeyError} as e:
-            cond_to_params = {}
-
+    def init_conditions_values(self, did, contract_name_to_address):
         param_map = {
             '_documentId': did_to_id(did),
             '_amount': self.attributes['main']['price'],
@@ -114,9 +109,7 @@ class ServiceAgreement(Service):
         }
         conditions = self.conditions[:]
         for cond in conditions:
-            params = set(cond_to_params.get(cond.contract_name, []))
             for param in cond.parameters:
-                assert not params or param.name in params, f'param does not match any of the abi params {params}'
                 param.value = param_map.get(param.name, '')
 
             if cond.timeout > 0:

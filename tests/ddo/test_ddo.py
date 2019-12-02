@@ -189,9 +189,9 @@ def test_service_factory():
     keeper = Keeper.get_instance()
     name_to_address = {name: i.address for name, i in keeper.contract_name_to_instance.items()}
     s = services[1]
-    s.init_conditions_values(keeper, ddo.did, name_to_address)
+    s.init_conditions_values(ddo.did, name_to_address)
     s = services[2]
-    s.init_conditions_values(keeper, ddo.did, name_to_address)
+    s.init_conditions_values(ddo.did, name_to_address)
 
-    assert isinstance(s[1], ServiceAgreement)
-    assert isinstance(s[2], ServiceAgreement)
+    assert isinstance(services[1], ServiceAgreement)
+    assert isinstance(services[2], ServiceAgreement)
