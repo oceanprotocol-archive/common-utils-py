@@ -125,7 +125,8 @@ class ServiceFactory(object):
         elif service_type == ServiceTypes.CLOUD_COMPUTE:
             return ServiceFactory.build_compute_service(
                 kwargs['attributes'],
-                kwargs['serviceEndpoint']
+                kwargs['serviceEndpoint'],
+                kwargs['templateId']
             )
         raise ValueError(f'Unknown service type {service_type}')
 
