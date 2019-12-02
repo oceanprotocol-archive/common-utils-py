@@ -5,47 +5,37 @@
 
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
-
+import copy
 import json
 import logging
-from collections import namedtuple
 
 # from ocean_commons.agreements.service_agreement import ServiceAgreement
 # from ocean_commons.agreements.service_types import ServiceTypes
 
 logger = logging.getLogger(__name__)
 
-Endpoints = namedtuple('Endpoints', ('service', 'purchase'))
-
 
 class Service:
     """Service class to create validate service in a DDO."""
     SERVICE_ENDPOINT = 'serviceEndpoint'
-    PURCHASE_ENDPOINT = 'purchaseEndpoint'
+    SERVICE_TYPE = 'type'
+    SERVICE_INDEX = 'index'
+    SERVICE_ATTRIBUTES = 'attributes'
 
-    def __init__(self, service_endpoint, service_type, values, purchase_endpoint=None, did=None):
+    def __init__(self, service_endpoint, service_type, attributes, other_values=None, index=None):
         """Initialize Service instance."""
         self._service_endpoint = service_endpoint
-        self._purchase_endpoint = purchase_endpoint
-        self._type = service_type
-        self._did = did
+        self._type = service_type or ''
+        self._index = index
+        self._attributes = attributes or {}
 
         # assign the _values property to empty until they are used
         self._values = dict()
-        reserved_names = {self.SERVICE_ENDPOINT, 'type'}
-        if values:
-            for name, value in values.items():
-                if name not in reserved_names:
+        self._reserved_names = {self.SERVICE_ENDPOINT, self.SERVICE_TYPE, self.SERVICE_INDEX}
+        if other_values:
+            for name, value in other_values.items():
+                if name not in self._reserved_names:
                     self._values[name] = value
-
-    @property
-    def did(self):
-        """
-        Id of the asset includes the `did:op:` prefix.
-
-        :return: DID, str
-        """
-        return self._did
 
     @property
     def type(self):
@@ -57,37 +47,45 @@ class Service:
         return self._type
 
     @property
-    def service_definition_id(self):
+    def index(self):
         """
         Identifier of the service inside the asset DDO
 
         :return: str
         """
-        return self._values.get('serviceDefinitionId')
-
-    # @property
-    # def agreement(self):
-    #     if self._type == ServiceTypes.METADATA or self._type == ServiceTypes.AUTHORIZATION:
-    #         return None
-    #
-    #     return ServiceAgreement.from_service_dict(self.as_dictionary()).agreement
+        return self._index
 
     @property
-    def endpoints(self):
+    def service_endpoint(self):
         """
-        Tuple with the service and purchase endpoints.
+        Service endpoint.
 
-        :return: Tuple
+        :return: String
         """
-        return Endpoints(self._service_endpoint, self._purchase_endpoint)
+        return self._service_endpoint
 
-    @property
+    def set_service_endpoint(self, service_endpoint):
+        """
+        Update service endpoint. Needed to update after create did.
+
+        :param service_endpoint: Service endpoint, str
+        """
+        self._service_endpoint = service_endpoint
+
     def values(self):
         """
 
         :return: array of values
         """
         return self._values.copy()
+
+    @property
+    def attributes(self):
+        return self._attributes
+
+    @property
+    def main(self):
+        return self._attributes['main']
 
     def update_value(self, name, value):
         """
@@ -97,78 +95,67 @@ class Service:
         :param value: New value, str
         :return: None
         """
-        if name not in {'id', self.SERVICE_ENDPOINT, self.PURCHASE_ENDPOINT, 'type'}:
+        if name not in self._reserved_names:
             self._values[name] = value
-
-    def set_did(self, did):
-        """
-        Update the did.
-
-        :param did: DID, str
-        """
-        assert self._did is None, 'service did already set.'
-        self._did = did
-
-    def is_valid(self):
-        """Return True if the sevice is valid."""
-        return self._service_endpoint is not None and self._type is not None
 
     def as_text(self, is_pretty=False):
         """Return the service as a JSON string."""
-        values = {
-            'type': self._type,
-            self.SERVICE_ENDPOINT: self._service_endpoint,
-        }
-        if self._purchase_endpoint is not None:
-            values[self.PURCHASE_ENDPOINT] = self._purchase_endpoint
-        if self._values:
-            # add extra service values to the dictionary
-            for name, value in self._values.items():
-                values[name] = value
-
+        values_dict = self.as_dictionary()
         if is_pretty:
-            return json.dumps(values, indent=4, separators=(',', ': '))
+            return json.dumps(values_dict, indent=4, separators=(',', ': '))
 
-        return json.dumps(values)
+        return json.dumps(values_dict)
 
     def as_dictionary(self):
         """Return the service as a python dictionary."""
-        values = {
-            'type': self._type,
-            self.SERVICE_ENDPOINT: self._service_endpoint,
-        }
-        if self._purchase_endpoint is not None:
-            values[self.PURCHASE_ENDPOINT] = self._purchase_endpoint
-        if self._values:
-            # add extra service values to the dictionary
-            for name, value in self._values.items():
-                if isinstance(value, object) and hasattr(value, 'as_dictionary'):
-                    value = value.as_dictionary()
-                elif isinstance(value, list):
-                    value = [v.as_dictionary() if hasattr(v, 'as_dictionary') else v for v in value]
+        attributes = {}
+        for key, value in self._attributes.items():
+            if isinstance(value, object) and hasattr(value, 'as_dictionary'):
+                value = value.as_dictionary()
+            elif isinstance(value, list):
+                value = [v.as_dictionary() if hasattr(v, 'as_dictionary') else v for v in value]
 
-                values[name] = value
+            attributes[key] = value
+
+        values = {
+            self.SERVICE_TYPE: self._type,
+            self.SERVICE_ENDPOINT: self._service_endpoint,
+            self.SERVICE_ATTRIBUTES: attributes
+        }
+        if self._index is not None:
+            values[self.SERVICE_INDEX] = self._index
+
+        if self._values:
+            values.update(self._values)
+
         return values
 
     @classmethod
-    def from_json(cls, service_dict):
-        """Create a service object from a JSON string."""
-        sd = service_dict.copy()
-        service_endpoint = sd.get(cls.SERVICE_ENDPOINT)
+    def _parse_json(cls, service_dict):
+        sd = copy.deepcopy(service_dict)
+        service_endpoint = sd.pop(cls.SERVICE_ENDPOINT, None)
+        _type = sd.pop(cls.SERVICE_TYPE, None)
+        _index = sd.pop(cls.SERVICE_INDEX, None)
+        _attributes = sd.pop(cls.SERVICE_ATTRIBUTES, None)
         if not service_endpoint:
             logger.error(
                 'Service definition in DDO document is missing the "serviceEndpoint" key/value.')
             raise IndexError
 
-        _type = sd.get('type')
         if not _type:
             logger.error('Service definition in DDO document is missing the "type" key/value.')
             raise IndexError
 
-        sd.pop(cls.SERVICE_ENDPOINT)
-        sd.pop('type')
+        return service_endpoint, _type, _index, _attributes, sd
+
+    @classmethod
+    def from_json(cls, service_dict):
+        """Create a service object from a JSON string."""
+        service_endpoint, _type, _index, _attributes, sd = cls._parse_json(service_dict)
         return cls(
             service_endpoint,
             _type,
-            sd
+            _attributes,
+            sd,
+            _index
         )

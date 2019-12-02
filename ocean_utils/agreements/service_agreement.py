@@ -1,11 +1,11 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
-
 from collections import namedtuple
 
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
-from ocean_utils.agreements.service_types import ServiceTypes
+from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndices
 from ocean_utils.ddo.service import Service
+from ocean_utils.did import did_to_id
 from ocean_utils.utils.utilities import generate_prefixed_id
 
 Agreement = namedtuple('Agreement', ('template', 'conditions'))
@@ -13,35 +13,109 @@ Agreement = namedtuple('Agreement', ('template', 'conditions'))
 
 class ServiceAgreement(Service):
     """Class representing a Service Agreement."""
-    SERVICE_DEFINITION_ID = 'serviceDefinitionId'
     AGREEMENT_TEMPLATE = 'serviceAgreementTemplate'
     SERVICE_CONDITIONS = 'conditions'
-    PURCHASE_ENDPOINT = 'purchaseEndpoint'
-    SERVICE_ENDPOINT = 'serviceEndpoint'
 
-    def __init__(self, sa_definition_id, service_agreement_template, service_endpoint=None,
-                 purchase_endpoint=None, service_type=None):
+    def __init__(self, attributes, service_agreement_template, service_endpoint=None,
+                 service_type=None, service_index=None, other_values=None):
         """
 
-        :param sa_definition_id:
+        :param attributes: dict of main attributes of the service. This should
+            include `main` and optionally the `additionalInformation` section
         :param service_agreement_template: ServiceAgreementTemplate instance
         :param service_endpoint: str URL to use for requesting service defined in this agreement
-        :param purchase_endpoint: str URL to use for consuming the service after access is given
         :param service_type: str like ServiceTypes.ASSET_ACCESS
+        :param other_values: dict of other key/value that maybe added and will be kept as is.
         """
-        self.sa_definition_id = sa_definition_id
         self.service_agreement_template = service_agreement_template
+        self._other_values = other_values or {}
 
-        values_dict = {
-            ServiceAgreement.SERVICE_DEFINITION_ID: self.sa_definition_id,
-            ServiceAgreementTemplate.TEMPLATE_ID_KEY: self.template_id,
-
+        service_to_default_index = {
+            ServiceTypes.ASSET_ACCESS: ServiceTypesIndices.DEFAULT_ACCESS_INDEX,
+            ServiceTypes.CLOUD_COMPUTE: ServiceTypesIndices.DEFAULT_COMPUTING_INDEX
         }
-        values_dict.update(self.service_agreement_template.as_dictionary())
 
-        Service.__init__(self, service_endpoint,
-                         service_type or ServiceTypes.ASSET_ACCESS,
-                         values_dict, purchase_endpoint)
+        try:
+            default_index = service_to_default_index[service_type]
+        except KeyError:
+            raise ValueError(f'The service_type {service_type} is not currently supported. Supported '
+                             f'service types are {ServiceTypes.ASSET_ACCESS} and {ServiceTypes.CLOUD_COMPUTE}')
+
+        service_index = service_index if service_index is not None else default_index
+        Service.__init__(self, service_endpoint, service_type, attributes, other_values, service_index)
+
+    @classmethod
+    def from_json(cls, service_dict):
+        """
+
+        :param service_dict:
+        :return:
+        """
+        service_endpoint, _type, _index, _attributes, service_dict = cls._parse_json(service_dict)
+        template = ServiceAgreementTemplate(
+            service_dict.pop('templateId'),
+            _attributes['main']['name'],
+            _attributes['main']['creator'],
+            _attributes[cls.AGREEMENT_TEMPLATE]
+        )
+
+        return cls(
+            _attributes,
+            template,
+            service_endpoint,
+            _type,
+            _index,
+            service_dict
+        )
+
+    @classmethod
+    def from_ddo(cls, service_type, ddo):
+        """
+
+        :param service_type: identifier of the service inside the asset DDO, str
+        :param ddo:
+        :return:
+        """
+        service_dict = ddo.get_service(service_type).as_dictionary()
+        if not service_dict:
+            raise ValueError(
+                f'Service of type {service_type} is not found in this DDO.')
+
+        return cls.from_json(service_dict)
+
+    def as_dictionary(self):
+        values = Service.as_dictionary(self)
+        values[ServiceAgreementTemplate.TEMPLATE_ID_KEY] = self.template_id
+        attributes = values[ServiceAgreement.SERVICE_ATTRIBUTES]
+        attributes[ServiceAgreement.AGREEMENT_TEMPLATE] = self.service_agreement_template.template
+        return values
+
+    def _get_condition_param_map(self, keeper):
+        template_contract = keeper.get_contract(self.service_agreement_template.contract_name)
+        condition_contracts = [keeper.get_contract_by_address(cond_address)
+                               for cond_address in template_contract.get_condition_types()]
+        condition_to_args = dict()
+        for cc in condition_contracts:
+            f_abis = {f.fn_name: f.abi for f in cc.contract.all_functions()}
+            condition_to_args[cc.CONTRACT_NAME] = [i['name'] for i in f_abis['fulfill']['inputs']]
+
+        return condition_to_args
+
+    def init_conditions_values(self, did, contract_name_to_address):
+        param_map = {
+            '_documentId': did_to_id(did),
+            '_amount': self.attributes['main']['price'],
+            '_rewardAddress': contract_name_to_address['EscrowReward']
+        }
+        conditions = self.conditions[:]
+        for cond in conditions:
+            for param in cond.parameters:
+                param.value = param_map.get(param.name, '')
+
+            if cond.timeout > 0:
+                cond.timeout = self.attributes['main']['timeout']
+
+        self.service_agreement_template.set_conditions(conditions)
 
     def get_price(self):
         """
@@ -61,14 +135,6 @@ class ServiceAgreement(Service):
         :return:
         """
         return self._service_endpoint
-
-    @property
-    def purchase_endpoint(self):
-        """
-
-        :return:
-        """
-        return self._purchase_endpoint
 
     @property
     def agreement(self):
@@ -138,36 +204,6 @@ class ServiceAgreement(Service):
         """
         return [cond.contract_name for cond in self.conditions]
 
-    @classmethod
-    def from_ddo(cls, service_definition_id, ddo):
-        """
-
-        :param service_definition_id: identifier of the service inside the asset DDO, str
-        :param ddo:
-        :return:
-        """
-        service_def = ddo.find_service_by_id(service_definition_id).as_dictionary()
-        if not service_def:
-            raise ValueError(
-                f'Service with definition id {service_definition_id} is not found in this DDO.')
-
-        return cls.from_service_dict(service_def)
-
-    @classmethod
-    def from_service_dict(cls, service_dict):
-        """
-
-        :param service_dict:
-        :return:
-        """
-        return cls(
-            service_dict[cls.SERVICE_DEFINITION_ID],
-            ServiceAgreementTemplate(service_dict),
-            service_dict.get(cls.SERVICE_ENDPOINT),
-            service_dict.get(cls.PURCHASE_ENDPOINT),
-            service_dict.get('type')
-        )
-
     @staticmethod
     def generate_service_agreement_hash(template_id, values_hash_list, timelocks, timeouts,
                                         agreement_id, hash_function):
@@ -178,7 +214,8 @@ class ServiceAgreement(Service):
         :param timelocks:
         :param timeouts:
         :param agreement_id: id of the agreement, hex str
-        :param hash_function: reference to function that will be used to compute the hash (sha3 or similar)
+        :param hash_function: reference to function that will be used to compute the hash (sha3
+        or similar)
         :return:
         """
         return hash_function(
@@ -210,18 +247,27 @@ class ServiceAgreement(Service):
             self.condition_by_name['lockReward'].param_types,
             [keeper.escrow_reward_condition.address, self.get_price()]).hex()
 
-        access_cond_id = keeper.access_secret_store_condition.generate_id(
-            agreement_id,
-            self.condition_by_name['accessSecretStore'].param_types,
-            [asset_id, consumer_address]).hex()
+        if self.type == ServiceTypes.ASSET_ACCESS:
+            access_or_compute_id = keeper.access_secret_store_condition.generate_id(
+                agreement_id,
+                self.condition_by_name['accessSecretStore'].param_types,
+                [asset_id, consumer_address]).hex()
+        elif self.type == ServiceTypes.CLOUD_COMPUTE:
+            access_or_compute_id = keeper.compute_execution_condition.generate_id(
+                agreement_id,
+                self.condition_by_name['execCompute'].param_types,
+                [asset_id, consumer_address]).hex()
+        else:
+            raise Exception(
+                'Error generating the condition ids, the service_agreement type is not valid.')
 
         escrow_cond_id = keeper.escrow_reward_condition.generate_id(
             agreement_id,
             self.condition_by_name['escrowReward'].param_types,
             [self.get_price(), publisher_address, consumer_address,
-             lock_cond_id, access_cond_id]).hex()
+             lock_cond_id, access_or_compute_id]).hex()
 
-        return access_cond_id, lock_cond_id, escrow_cond_id
+        return access_or_compute_id, lock_cond_id, escrow_cond_id
 
     def get_service_agreement_hash(
             self, agreement_id, asset_id, consumer_address, publisher_address, keeper):

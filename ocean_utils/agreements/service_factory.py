@@ -3,10 +3,9 @@
 
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
-from ocean_utils.agreements.service_types import ServiceTypes
+from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndices
 from ocean_utils.agreements.utils import get_sla_template
 from ocean_utils.ddo.service import Service
-from ocean_utils.did import did_to_id
 
 
 class ServiceDescriptor(object):
@@ -14,16 +13,16 @@ class ServiceDescriptor(object):
     item is a dict of parameters and values required by the service"""
 
     @staticmethod
-    def metadata_service_descriptor(metadata, service_endpoint):
+    def metadata_service_descriptor(attributes, service_endpoint):
         """
         Metadata service descriptor.
 
-        :param metadata: conforming to the Metadata accepted by Ocean Protocol, dict
+        :param attributes: conforming to the Metadata accepted by Ocean Protocol, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :return: Service descriptor.
         """
         return (ServiceTypes.METADATA,
-                {'metadata': metadata, 'serviceEndpoint': service_endpoint})
+                {'attributes': attributes, 'serviceEndpoint': service_endpoint})
 
     @staticmethod
     def authorization_service_descriptor(service_endpoint):
@@ -34,88 +33,72 @@ class ServiceDescriptor(object):
         :return: Service descriptor.
         """
         return (ServiceTypes.AUTHORIZATION,
-                {'serviceEndpoint': service_endpoint})
+                {'attributes': {'main': {}}, 'serviceEndpoint': service_endpoint})
 
     @staticmethod
-    def access_service_descriptor(price, purchase_endpoint, service_endpoint, timeout,
-                                  template_id, reward_contract_address):
+    def access_service_descriptor(attributes, service_endpoint, template_id):
         """
         Access service descriptor.
 
-        :param price: Asset price, int
-        :param purchase_endpoint: url of the service provider, str
+        :param attributes: attributes of the access service, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
-        :param timeout: amount of time in seconds before the agreement expires, int
-        :param template_id: id of the template use to create the service, str
-        :param reward_contract_address: hex str ethereum address of deployed reward condition
-            smart contract
+        :param template_id:
         :return: Service descriptor.
         """
         return (
             ServiceTypes.ASSET_ACCESS,
-            {
-                'price': price,
-                'purchaseEndpoint': purchase_endpoint,
-                'serviceEndpoint': service_endpoint,
-                'timeout': timeout,
-                'templateId': template_id,
-                'rewardContractAddress': reward_contract_address}
+            {'attributes': attributes,
+             'serviceEndpoint': service_endpoint,
+             'templateId': template_id}
         )
 
     @staticmethod
-    def compute_service_descriptor(price, purchase_endpoint, service_endpoint,
-                                   timeout, reward_contract_address):
+    def compute_service_descriptor(attributes, service_endpoint, template_id):
         """
         Compute service descriptor.
 
-        :param price: Asset price, int
-        :param purchase_endpoint: url of the service provider, str
+        :param attributes: attributes of the compute service, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
-        :param timeout: amount of time in seconds before the agreement expires, int
-        :param reward_contract_address: hex str ethereum address of deployed reward condition
-            smart contract
+        :param template_id:
         :return: Service descriptor.
         """
-        return (ServiceTypes.CLOUD_COMPUTE,
-                {'price': price,
-                 'purchaseEndpoint': purchase_endpoint,
-                 'serviceEndpoint': service_endpoint,
-                 'timeout': timeout,
-                 'rewardContractAddress': reward_contract_address})
+        return (
+            ServiceTypes.CLOUD_COMPUTE,
+            {'attributes': attributes,
+             'serviceEndpoint': service_endpoint,
+             'templateId': template_id}
+        )
 
 
 class ServiceFactory(object):
     """Factory class to create Services."""
 
     @staticmethod
-    def build_services(did, service_descriptors):
+    def build_services(service_descriptors):
         """
         Build a list of services.
 
-        :param did: DID, str
         :param service_descriptors: List of tuples of length 2. The first item must be one of
         ServiceTypes
         and the second item is a dict of parameters and values required by the service
         :return: List of Services
         """
         services = []
-        sa_def_key = ServiceAgreement.SERVICE_DEFINITION_ID
         for i, service_desc in enumerate(service_descriptors):
-            service = ServiceFactory.build_service(service_desc, did)
-            # set serviceDefinitionId for each service
-            service.update_value(sa_def_key, str(i))
+            service = ServiceFactory.build_service(service_desc)
+            # set index for each service
+            service.update_value(ServiceAgreement.SERVICE_INDEX, int(i))
             services.append(service)
 
         return services
 
     @staticmethod
-    def build_service(service_descriptor, did):
+    def build_service(service_descriptor):
         """
         Build a service.
 
         :param service_descriptor: Tuples of length 2. The first item must be one of ServiceTypes
         and the second item is a dict of parameters and values required by the service
-        :param did: DID, str
         :return: Service
         """
         assert isinstance(service_descriptor, tuple) and len(
@@ -123,104 +106,102 @@ class ServiceFactory(object):
         service_type, kwargs = service_descriptor
         if service_type == ServiceTypes.METADATA:
             return ServiceFactory.build_metadata_service(
-                did,
-                kwargs['metadata'],
+                kwargs['attributes'],
                 kwargs['serviceEndpoint']
             )
 
         elif service_type == ServiceTypes.AUTHORIZATION:
             return ServiceFactory.build_authorization_service(
+                kwargs['attributes'],
                 kwargs['serviceEndpoint']
             )
 
         elif service_type == ServiceTypes.ASSET_ACCESS:
             return ServiceFactory.build_access_service(
-                did, kwargs['price'],
-                kwargs['purchaseEndpoint'], kwargs['serviceEndpoint'],
-                kwargs['timeout'], kwargs['templateId'], kwargs['rewardContractAddress']
+                kwargs['attributes'],
+                kwargs['serviceEndpoint'],
+                kwargs['templateId']
             )
-
         elif service_type == ServiceTypes.CLOUD_COMPUTE:
             return ServiceFactory.build_compute_service(
-                did, kwargs['price'],
-                kwargs['purchaseEndpoint'], kwargs['serviceEndpoint'],
-                kwargs['timeout'], kwargs['rewardContractAddress']
+                kwargs['attributes'],
+                kwargs['serviceEndpoint'],
+                kwargs['templateId']
             )
-
         raise ValueError(f'Unknown service type {service_type}')
 
     @staticmethod
-    def build_metadata_service(did, metadata, service_endpoint):
+    def build_metadata_service(metadata, service_endpoint):
         """
         Build a metadata service.
 
-        :param did: DID, str
         :param metadata: conforming to the Metadata accepted by Ocean Protocol, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
         :return: Service
         """
         return Service(service_endpoint,
                        ServiceTypes.METADATA,
-                       values={'metadata': metadata},
-                       did=did)
+                       attributes=metadata,
+                       index=ServiceTypesIndices.DEFAULT_METADATA_INDEX
+                       )
 
     @staticmethod
-    def build_authorization_service(service_endpoint):
+    def build_authorization_service(attributes, service_endpoint):
         """
         Build an authorization service.
 
-        :param service_endpoint:
+        :param attributes: attributes of authorization service, dict
+        :param service_endpoint: identifier of the service inside the asset DDO, str
         :return: Service
         """
         return Service(service_endpoint, ServiceTypes.AUTHORIZATION,
-                       values={'service': 'SecretStore'})
+                       attributes=attributes,
+                       index=ServiceTypesIndices.DEFAULT_AUTHORIZATION_INDEX)
 
     @staticmethod
-    def build_access_service(did, price, purchase_endpoint, service_endpoint,
-                             timeout, template_id, reward_contract_address):
+    def build_access_service(attributes, service_endpoint, template_id):
         """
-        Build the access service.
+        Build an authorization service.
 
-        :param did: DID, str
-        :param price: Asset price, int
-        :param purchase_endpoint: url of the service provider, str
+        :param attributes: attributes of access service, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
-        :param timeout: amount of time in seconds before the agreement expires, int
-        :param template_id: id of the template use to create the service, str
-        :param reward_contract_address: hex str ethereum address of deployed reward condition
-            smart contract
-        :return: ServiceAgreement
+        :param template_id: hex str the ethereum smart contract address of the
+            service agreement template contract.
+        :return: ServiceAgreement instance
         """
-        # TODO fill all the possible mappings
-        param_map = {
-            '_documentId': did_to_id(did),
-            '_amount': price,
-            '_rewardAddress': reward_contract_address
-        }
         sla_template_dict = get_sla_template()
-        sla_template = ServiceAgreementTemplate(template_json=sla_template_dict)
-        sla_template.template_id = template_id
-        conditions = sla_template.conditions[:]
-        for cond in conditions:
-            for param in cond.parameters:
-                param.value = param_map.get(param.name, '')
-
-            if cond.timeout > 0:
-                cond.timeout = timeout
-
-        sla_template.set_conditions(conditions)
-        sa = ServiceAgreement(
-            1,
+        sla_template = ServiceAgreementTemplate(
+            template_id, 'dataAssetAccessServiceAgreement',
+            attributes['main']['creator'], sla_template_dict
+        )
+        return ServiceAgreement(
+            attributes,
             sla_template,
             service_endpoint,
-            purchase_endpoint,
-            ServiceTypes.ASSET_ACCESS
+            ServiceTypes.ASSET_ACCESS,
+            ServiceTypesIndices.DEFAULT_ACCESS_INDEX
         )
-        sa.set_did(did)
-        return sa
 
     @staticmethod
-    def build_compute_service(did, price, purchase_endpoint, service_endpoint,
-                              timeout, reward_contract_address):
-        # TODO: implement this once the compute flow is ready
-        return
+    def build_compute_service(attributes, service_endpoint, template_id):
+        """
+        Build an authorization service.
+
+        :param attributes: attributes of compute service, dict
+        :param service_endpoint: identifier of the service inside the asset DDO, str
+        :param template_id: hex str the ethereum smart contract address of the
+            service agreement template contract.
+        :return: ServiceAgreement instance
+        """
+        sla_template_dict = get_sla_template(ServiceTypes.CLOUD_COMPUTE)
+        sla_template = ServiceAgreementTemplate(
+            template_id, 'dataComputeServiceAgreement',
+            attributes['main']['creator'], sla_template_dict
+        )
+        return ServiceAgreement(
+            attributes,
+            sla_template,
+            service_endpoint,
+            ServiceTypes.CLOUD_COMPUTE,
+            ServiceTypesIndices.DEFAULT_COMPUTING_INDEX
+        )

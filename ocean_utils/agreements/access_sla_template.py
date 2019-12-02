@@ -1,5 +1,5 @@
 ACCESS_SLA_TEMPLATE = {
-  "type": "Access",
+  "type": "access",
   "templateId": "",
   "name": "dataAssetAccessServiceAgreement",
   "description": "This service agreement defines the flow for accessing a data asset on the ocean network. Any file or bundle of files can be access using this service agreement",

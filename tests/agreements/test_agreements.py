@@ -4,7 +4,7 @@
 from ocean_keeper.utils import generate_multi_value_hash
 from web3 import Web3
 
-from ocean_utils.agreements.service_agreement import ServiceAgreement
+from ocean_utils.agreements.service_agreement import ServiceAgreement, ServiceTypes
 from tests.resources.helper_functions import (
     get_ddo_sample,
     log_event
@@ -13,7 +13,7 @@ from tests.resources.tiers import e2e_test
 
 
 @e2e_test
-def test_escrow_access_secret_store_template_flow(setup_agreements_enviroment):
+def test_escrow_access_secret_store_template_flow(setup_agreements_environment):
     """Test the agreement flow according to the EscrowAccessSecretStoreTemplate."""
     (
         keeper,
@@ -25,7 +25,7 @@ def test_escrow_access_secret_store_template_flow(setup_agreements_enviroment):
         service_agreement,
         (lock_cond_id, access_cond_id, escrow_cond_id),
 
-    ) = setup_agreements_enviroment
+    ) = setup_agreements_environment
 
     print('creating agreement:'
           'agrId: ', agreement_id,
@@ -137,12 +137,13 @@ def test_agreement_hash():
     This will make it easier to compare the hash generated from different languages.
     """
     w3 = Web3
-    did = "did:op:cb36cf78d87f4ce4a784f17c2a4a694f19f3fbf05b814ac6b0b7197163888865"
+    did = "did:op:0bc278fee025464f8012b811d1bce8e22094d0984e4e49139df5d5ff7a028bdf"
     template_id = w3.toChecksumAddress("0x00bd138abd70e2f00903268f3db08f2d25677c9e")
     agreement_id = '0xf136d6fadecb48fdb2fc1fb420f5a5d1c32d22d9424e47ab9461556e058fefaa'
     ddo = get_ddo_sample()
 
-    sa = ServiceAgreement.from_service_dict(ddo.get_service(service_type='Access').as_dictionary())
+    sa = ServiceAgreement.from_json(
+        ddo.get_service(ServiceTypes.ASSET_ACCESS).as_dictionary())
     sa.service_agreement_template.set_template_id(template_id)
     assert template_id == sa.template_id, ''
     assert did == ddo.did
@@ -187,6 +188,7 @@ def test_agreement():
     )
 
     print({signature})
-    assert signature == Web3.toBytes(
-        hexstr="0x67901517c18a3d23e05806fff7f04235cc8ae3b1f82345b8bfb3e4b02b5800c7"), \
-        "The signature is not correct."
+    assert (
+        signature == Web3.toBytes(
+            hexstr="0x67901517c18a3d23e05806fff7f04235cc8ae3b1f82345b8bfb3e4b02b5800c7"
+        )), "The signature is not correct."

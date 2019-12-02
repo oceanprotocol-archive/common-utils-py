@@ -7,7 +7,7 @@ import re
 from eth_utils import remove_0x_prefix
 from web3 import Web3
 
-from ocean_utils.utils.utilities import generate_new_id
+from ocean_utils.utils.utilities import checksum
 
 OCEAN_PREFIX = 'did:op:'
 
@@ -16,16 +16,17 @@ class DID:
     """Class representing an asset DID."""
 
     @staticmethod
-    def did():
+    def did(seed):
         """
         Create a did.
 
         Format of the did:
         did:op:cb36cf78d87f4ce4a784f17c2a4a694f19f3fbf05b814ac6b0b7197163888865
 
+        :param seed: The list of checksums that is allocated in the proof, dict
         :return: Asset did, str.
         """
-        return OCEAN_PREFIX + generate_new_id()
+        return OCEAN_PREFIX + remove_0x_prefix(checksum(seed))
 
 
 def did_parse(did):
@@ -111,5 +112,6 @@ def did_to_id_bytes(did):
         id_bytes = did
     else:
         raise TypeError(
-            f'Unknown did format, expected str or bytes, got {did} of type {type(did)}')
+            f'Unknown did format, expected str or bytes, got {did} of type {type(did)}'
+        )
     return id_bytes
