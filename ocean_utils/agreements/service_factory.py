@@ -6,7 +6,6 @@ from ocean_utils.agreements.service_agreement_template import ServiceAgreementTe
 from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndices
 from ocean_utils.agreements.utils import get_sla_template
 from ocean_utils.ddo.service import Service
-from ocean_utils.did import did_to_id
 
 
 class ServiceDescriptor(object):

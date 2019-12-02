@@ -4,7 +4,6 @@ from collections import namedtuple
 
 from ocean_utils.agreements.service_agreement_template import ServiceAgreementTemplate
 from ocean_utils.agreements.service_types import ServiceTypes, ServiceTypesIndices
-from ocean_utils.agreements.utils import get_sla_template
 from ocean_utils.ddo.service import Service
 from ocean_utils.did import did_to_id
 from ocean_utils.utils.utilities import generate_prefixed_id
