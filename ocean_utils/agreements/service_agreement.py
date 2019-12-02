@@ -97,12 +97,17 @@ class ServiceAgreement(Service):
                                for cond_address in template_contract.get_condition_types()]
         condition_to_args = dict()
         for cc in condition_contracts:
-            condition_to_args[cc.CONTRACT_NAME] = [i['name'] for i in cc.contract.functions.get('fulfill')['inputs']]
+            f_abis = {f.fn_name: f.abi for f in cc.contract.all_functions()}
+            condition_to_args[cc.CONTRACT_NAME] = [i['name'] for i in f_abis['fulfill']['inputs']]
 
         return condition_to_args
 
     def init_conditions_values(self, keeper, did, contract_name_to_address):
-        cond_to_params = self._get_condition_param_map(keeper)
+        try:
+            cond_to_params = self._get_condition_param_map(keeper)
+        except {Exception, KeyError} as e:
+            cond_to_params = {}
+
         param_map = {
             '_documentId': did_to_id(did),
             '_amount': self.attributes['main']['price'],
@@ -110,9 +115,9 @@ class ServiceAgreement(Service):
         }
         conditions = self.conditions[:]
         for cond in conditions:
-            params = set(cond_to_params[cond.contract_name])
+            params = set(cond_to_params.get(cond.contract_name, []))
             for param in cond.parameters:
-                assert param.name in params, f'param does not match any of the abi params {params}'
+                assert not params or param.name in params, f'param does not match any of the abi params {params}'
                 param.value = param_map.get(param.name, '')
 
             if cond.timeout > 0:
@@ -243,7 +248,6 @@ class ServiceAgreement(Service):
         :param consumer_address: ethereum account address of consumer, hex str
         :param publisher_address: ethereum account address of publisher, hex str
         :param keeper:
-        :param template_type: type of template, currently only access and compute are supported
         :return:
         """
         lock_cond_id = keeper.lock_reward_condition.generate_id(
