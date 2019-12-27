@@ -26,6 +26,7 @@ before_install:
         [ -f "${HOME}/.ocean/keeper-contracts/artifacts/ready" ] && break
       done
       ls -la "${HOME}/.ocean/keeper-contracts/artifacts/"
+  - sleep 10
 
 install: pip install -U tox-travis
 
