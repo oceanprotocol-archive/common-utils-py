@@ -38,24 +38,27 @@ def test_escrow_access_secret_store_template_flow(setup_agreements_environment):
           'publisher', publisher_acc.address
           )
 
-    assert keeper.template_manager.is_template_approved(
-        keeper.escrow_access_secretstore_template.address), 'Template is not approved.'
+    assert 'access' in keeper.template_manager.SERVICE_TO_TEMPLATE_NAME
+    name = keeper.template_manager.SERVICE_TO_TEMPLATE_NAME.get('access')
+    template_id = keeper.template_manager.create_template_id(name)
+    assert keeper.template_manager.is_template_approved(template_id), 'Template is not approved.'
     assert keeper.did_registry.get_block_number_updated(asset_id) > 0, 'asset id not registered'
-    success = keeper.escrow_access_secretstore_template.create_agreement(
+    success = keeper.agreement_manager.create_agreement(
         agreement_id,
         asset_id,
-        [access_cond_id, lock_cond_id, escrow_cond_id],
+        template_id,
+        [lock_cond_id, access_cond_id, escrow_cond_id],
         service_agreement.conditions_timelocks,
         service_agreement.conditions_timeouts,
-        consumer_acc.address,
-        publisher_acc
+        [consumer_acc.address, publisher_acc.address],
+        consumer_acc
     )
     print('create agreement: ', success)
     assert success, f'createAgreement failed {success}'
-    event = keeper.escrow_access_secretstore_template.subscribe_agreement_created(
+    event = keeper.agreement_manager.subscribe_agreement_created(
         agreement_id,
         10,
-        log_event(keeper.escrow_access_secretstore_template.AGREEMENT_CREATED_EVENT),
+        log_event(keeper.agreement_manager.AGREEMENT_CREATED_EVENT),
         (),
         wait=True
     )
@@ -64,7 +67,8 @@ def test_escrow_access_secret_store_template_flow(setup_agreements_environment):
     # Verify condition types (condition contracts)
     agreement = keeper.agreement_manager.get_agreement(agreement_id)
     assert agreement.did == asset_id, ''
-    cond_types = keeper.escrow_access_secretstore_template.get_condition_types()
+    template_values = keeper.template_manager.get_template(template_id)
+    cond_types = template_values.condition_types
     for i, cond_id in enumerate(agreement.condition_ids):
         cond = keeper.condition_manager.get_condition(cond_id)
         assert cond.type_ref == cond_types[i]
@@ -72,11 +76,11 @@ def test_escrow_access_secret_store_template_flow(setup_agreements_environment):
 
     # Give consumer some tokens
     keeper.dispenser.request_vodkas(price, consumer_acc)
-
     # Fulfill lock_reward_condition
     pub_token_balance = keeper.token.get_token_balance(publisher_acc.address)
     starting_balance = keeper.token.get_token_balance(keeper.escrow_reward_condition.address)
-    keeper.token.token_approve(keeper.lock_reward_condition.address, price, consumer_acc)
+    approved = keeper.token.token_approve(keeper.lock_reward_condition.address, price, consumer_acc)
+    assert approved is True, 'token approval failed.'
     tx_hash = keeper.lock_reward_condition.fulfill(
         agreement_id, keeper.escrow_reward_condition.address, price, consumer_acc)
     keeper.lock_reward_condition.get_tx_receipt(tx_hash)
@@ -144,8 +148,6 @@ def test_agreement_hash():
 
     sa = ServiceAgreement.from_json(
         ddo.get_service(ServiceTypes.ASSET_ACCESS).as_dictionary())
-    sa.service_agreement_template.set_template_id(template_id)
-    assert template_id == sa.template_id, ''
     assert did == ddo.did
     # Don't generate condition ids, use fixed ids so we get consistent hash
     # (access_id, lock_id, escrow_id) = sa.generate_agreement_condition_ids(
@@ -158,7 +160,7 @@ def test_agreement_hash():
           f'{lock_id} \n'
           f'{escrow_id}')
     agreement_hash = ServiceAgreement.generate_service_agreement_hash(
-        sa.template_id,
+        template_id,
         (access_id, lock_id, escrow_id),
         sa.conditions_timelocks,
         sa.conditions_timeouts,

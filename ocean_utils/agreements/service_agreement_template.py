@@ -28,6 +28,9 @@ class ServiceAgreementTemplate(object):
 
         self.template = template_json
 
+    def template_id(self, keeper):
+        return keeper.template_manager.create_template_id(self.contract_name)
+
     def set_template_id(self, template_id):
         """
         Assign the template id to the template.
@@ -35,6 +38,9 @@ class ServiceAgreementTemplate(object):
         :param template_id: string
         """
         self.template_id = template_id
+
+    def is_template_valid(self, keeper):
+        return self.contract_name in keeper.template_manager.get_known_template_names()
 
     @property
     def fulfillment_order(self):
@@ -103,11 +109,6 @@ class ServiceAgreementTemplate(object):
             )
             for cond, contract in cond_contract_tuples
         }
-        agr_event_key = f'{self.contract_name}.{self.agreement_events[0].name}'
-        event_to_args[agr_event_key] = contract_by_name[
-            self.contract_name].get_event_argument_names(
-            self.agreement_events[0].name
-        )
 
         return event_to_args
 
