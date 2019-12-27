@@ -90,8 +90,8 @@ def setup_agreements_environment():
     service_agreement = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
     agreement_id = ServiceAgreement.create_new_agreement_id()
     price = service_agreement.get_price()
-    (access_cond_id,
-     lock_cond_id,
+    (lock_cond_id,
+     access_cond_id,
      escrow_cond_id) = service_agreement.generate_agreement_condition_ids(
             agreement_id, asset_id, consumer_acc.address, publisher_acc.address, keeper
     )
