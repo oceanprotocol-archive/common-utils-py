@@ -208,7 +208,7 @@ class ServiceAgreement(Service):
         :return:
         """
         return hash_function(
-            ['address', 'bytes32[]', 'uint256[]', 'uint256[]', 'bytes32'],
+            ['bytes32', 'bytes32[]', 'uint256[]', 'uint256[]', 'bytes32'],
             [template_id, values_hash_list, timelocks, timeouts, agreement_id]
         )
 

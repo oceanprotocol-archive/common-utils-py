@@ -140,9 +140,8 @@ def test_agreement_hash():
     This test verifies generating agreement hash using fixed inputs and ddo example.
     This will make it easier to compare the hash generated from different languages.
     """
-    w3 = Web3
     did = "did:op:0bc278fee025464f8012b811d1bce8e22094d0984e4e49139df5d5ff7a028bdf"
-    template_id = w3.toChecksumAddress("0x00bd138abd70e2f00903268f3db08f2d25677c9e")
+    template_id = '0x34219511357c43f4af90a4896b972a32809379bfbe8148eab3878e8406e75836'
     agreement_id = '0xf136d6fadecb48fdb2fc1fb420f5a5d1c32d22d9424e47ab9461556e058fefaa'
     ddo = get_ddo_sample()
 
@@ -168,13 +167,13 @@ def test_agreement_hash():
         generate_multi_value_hash
     )
     print('agreement hash: ', agreement_hash.hex())
-    expected = '0x96732b390dacec0f19ad304ac176b3407968a0184d01b3262687fd23a3f0995e'
+    expected = '0xc1bc6cdb161b9d04d5b48bceba51b9092c4da8db08003b96b93647fbe86e330c'
     print('expected hash: ', expected)
     assert agreement_hash.hex() == expected, 'hash does not match.'
 
 
 def test_agreement():
-    template_id = Web3.toChecksumAddress('0x' + ('f' * 40))
+    template_id = '0xda558ceb3abd482db04ea813810ae9c6cea5bf13ef9943908b1a8b51c4e56c7f'
     agreement_id = '0x' + ('e' * 64)
     access_id = '0x' + ('a' * 64)
     lock_id = '0x' + ('b' * 64)
@@ -192,5 +191,5 @@ def test_agreement():
     print({signature})
     assert (
         signature == Web3.toBytes(
-            hexstr="0x67901517c18a3d23e05806fff7f04235cc8ae3b1f82345b8bfb3e4b02b5800c7"
+            hexstr="0x3450be8127dbe156fad90956fd351df42ffcfabba89d230406a301ceb5b40f92"
         )), "The signature is not correct."
