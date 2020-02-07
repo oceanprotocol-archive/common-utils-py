@@ -19,15 +19,15 @@ COMPUTE_SLA_TEMPLATE = {
     ],
     "fulfillmentOrder": [
       "lockReward.fulfill",
-      "execCompute.fulfill",
+      "computeExecution.fulfill",
       "escrowReward.fulfill"
     ],
     "conditionDependency": {
       "lockReward": [],
-      "execCompute": [],
+      "computeExecution": [],
       "escrowReward": [
         "lockReward",
-        "execCompute"
+        "computeExecution"
       ]
     },
     "conditions": [
@@ -55,14 +55,14 @@ COMPUTE_SLA_TEMPLATE = {
                     "actorType": "publisher",
                     "handler": {
                         "moduleName": "lockRewardCondition",
-                        "functionName": "fulfillExecComputeCondition",
+                        "functionName": "fulfillComputeExecutionCondition",
                         "version": "0.1"
                     }
                 }
             ]
         },
         {
-            "name": "execCompute",
+            "name": "computeExecution",
             "timelock": 0,
             "timeout": 0,
             "contractName": "ComputeExecutionCondition",
@@ -93,7 +93,7 @@ COMPUTE_SLA_TEMPLATE = {
                     "name": "TimedOut",
                     "actorType": "consumer",
                     "handler": {
-                        "moduleName": "execCompute",
+                        "moduleName": "computeExecution",
                         "functionName": "fulfillEscrowRewardCondition",
                         "version": "0.1"
                     }
@@ -130,7 +130,7 @@ COMPUTE_SLA_TEMPLATE = {
                 {
                     "name": "_releaseCondition",
                     "type": "bytes32",
-                    "value": "{contract.ExecComputeCondition.address}"
+                    "value": "{contract.ComputeExecutionCondition.address}"
                 }
             ],
             "events": [

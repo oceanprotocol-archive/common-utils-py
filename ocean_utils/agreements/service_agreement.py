@@ -244,7 +244,7 @@ class ServiceAgreement(Service):
         elif self.type == ServiceTypes.CLOUD_COMPUTE:
             access_or_compute_id = keeper.compute_execution_condition.generate_id(
                 agreement_id,
-                self.condition_by_name['execCompute'].param_types,
+                self.condition_by_name['computeExecution'].param_types,
                 [asset_id, consumer_address]).hex()
         else:
             raise Exception(
