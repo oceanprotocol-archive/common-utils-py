@@ -149,9 +149,8 @@
         },
         "additionalInformation": {
           "description": ""
-        }
-      },
-      "serviceAgreementTemplate": {
+        },
+        "serviceAgreementTemplate": {
           "contractName": "EscrowAccessSecretStoreTemplate",
           "events": [
             {
@@ -294,6 +293,7 @@
             }
           ]
         }
+      }
     }
   ]
 }
