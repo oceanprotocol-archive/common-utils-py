@@ -56,7 +56,7 @@ class ServiceAgreement(Service):
             service_dict.pop('templateId'),
             _attributes['main']['name'],
             _attributes['main']['creator'],
-            service_dict[cls.AGREEMENT_TEMPLATE]
+            _attributes[cls.AGREEMENT_TEMPLATE]
         )
 
         return cls(
@@ -86,7 +86,8 @@ class ServiceAgreement(Service):
     def as_dictionary(self):
         values = Service.as_dictionary(self)
         values[ServiceAgreementTemplate.TEMPLATE_ID_KEY] = self.template_id
-        values[ServiceAgreement.AGREEMENT_TEMPLATE] = self.service_agreement_template.template
+        attributes = values[ServiceAgreement.SERVICE_ATTRIBUTES]
+        attributes[ServiceAgreement.AGREEMENT_TEMPLATE] = self.service_agreement_template.template
         return values
 
     def init_conditions_values(self, did, contract_name_to_address):
