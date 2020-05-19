@@ -90,17 +90,6 @@ class ServiceAgreement(Service):
         attributes[ServiceAgreement.AGREEMENT_TEMPLATE] = self.service_agreement_template.template
         return values
 
-    def _get_condition_param_map(self, keeper):
-        template_contract = keeper.get_contract(self.service_agreement_template.contract_name)
-        condition_contracts = [keeper.get_contract_by_address(cond_address)
-                               for cond_address in template_contract.get_condition_types()]
-        condition_to_args = dict()
-        for cc in condition_contracts:
-            f_abis = {f.fn_name: f.abi for f in cc.contract.all_functions()}
-            condition_to_args[cc.CONTRACT_NAME] = [i['name'] for i in f_abis['fulfill']['inputs']]
-
-        return condition_to_args
-
     def init_conditions_values(self, did, contract_name_to_address):
         param_map = {
             '_documentId': did_to_id(did),
@@ -219,7 +208,7 @@ class ServiceAgreement(Service):
         :return:
         """
         return hash_function(
-            ['address', 'bytes32[]', 'uint256[]', 'uint256[]', 'bytes32'],
+            ['bytes32', 'bytes32[]', 'uint256[]', 'uint256[]', 'bytes32'],
             [template_id, values_hash_list, timelocks, timeouts, agreement_id]
         )
 
@@ -255,7 +244,7 @@ class ServiceAgreement(Service):
         elif self.type == ServiceTypes.CLOUD_COMPUTE:
             access_or_compute_id = keeper.compute_execution_condition.generate_id(
                 agreement_id,
-                self.condition_by_name['execCompute'].param_types,
+                self.condition_by_name['computeExecution'].param_types,
                 [asset_id, consumer_address]).hex()
         else:
             raise Exception(
@@ -267,7 +256,7 @@ class ServiceAgreement(Service):
             [self.get_price(), publisher_address, consumer_address,
              lock_cond_id, access_or_compute_id]).hex()
 
-        return access_or_compute_id, lock_cond_id, escrow_cond_id
+        return lock_cond_id, access_or_compute_id, escrow_cond_id
 
     def get_service_agreement_hash(
             self, agreement_id, asset_id, consumer_address, publisher_address, keeper):
