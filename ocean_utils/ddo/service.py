@@ -137,10 +137,10 @@ class Service:
         _type = sd.pop(cls.SERVICE_TYPE, None)
         _index = sd.pop(cls.SERVICE_INDEX, None)
         _attributes = sd.pop(cls.SERVICE_ATTRIBUTES, None)
-        if not service_endpoint:
-            logger.error(
-                'Service definition in DDO document is missing the "serviceEndpoint" key/value.')
-            raise IndexError
+        # if not service_endpoint:
+        #    logger.error(
+        #        'Service definition in DDO document is missing the "serviceEndpoint" key/value.')
+        #    raise IndexError
 
         if not _type:
             logger.error('Service definition in DDO document is missing the "type" key/value.')
