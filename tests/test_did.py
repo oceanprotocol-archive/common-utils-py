@@ -9,8 +9,9 @@ import secrets
 import pytest
 from web3 import Web3
 
-from ocean_utils.did import (DID, did_parse, did_to_id, did_to_id_bytes, id_to_did, is_did_valid,
-                             OCEAN_PREFIX)
+from ocean_utils.did import (
+    DID, did_parse, did_to_id, did_to_id_bytes, id_to_did, is_did_valid, OCEAN_PREFIX
+)
 from tests.resources.tiers import e2e_test
 
 TEST_SERVICE_TYPE = 'ocean-meta-storage'

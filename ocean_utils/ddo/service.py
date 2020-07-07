@@ -9,9 +9,6 @@ import copy
 import json
 import logging
 
-# from ocean_commons.agreements.service_agreement import ServiceAgreement
-# from ocean_commons.agreements.service_types import ServiceTypes
-
 logger = logging.getLogger(__name__)
 
 

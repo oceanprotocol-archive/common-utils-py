@@ -119,14 +119,12 @@ class ServiceFactory(object):
         elif service_type == ServiceTypes.ASSET_ACCESS:
             return ServiceFactory.build_access_service(
                 kwargs['attributes'],
-                kwargs['serviceEndpoint'],
-                kwargs['templateId']
+                kwargs['serviceEndpoint']
             )
         elif service_type == ServiceTypes.CLOUD_COMPUTE:
             return ServiceFactory.build_compute_service(
                 kwargs['attributes'],
-                kwargs['serviceEndpoint'],
-                kwargs['templateId']
+                kwargs['serviceEndpoint']
             )
         raise ValueError(f'Unknown service type {service_type}')
 
@@ -159,48 +157,32 @@ class ServiceFactory(object):
                        index=ServiceTypesIndices.DEFAULT_AUTHORIZATION_INDEX)
 
     @staticmethod
-    def build_access_service(attributes, service_endpoint, template_id):
+    def build_access_service(attributes, service_endpoint):
         """
         Build an authorization service.
 
         :param attributes: attributes of access service, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
-        :param template_id: hex str the ethereum smart contract address of the
-            service agreement template contract.
         :return: ServiceAgreement instance
         """
-        sla_template_dict = get_sla_template()
-        sla_template = ServiceAgreementTemplate(
-            template_id, 'dataAssetAccessServiceAgreement',
-            attributes['main']['creator'], sla_template_dict
-        )
         return ServiceAgreement(
             attributes,
-            sla_template,
             service_endpoint,
             ServiceTypes.ASSET_ACCESS,
             ServiceTypesIndices.DEFAULT_ACCESS_INDEX
         )
 
     @staticmethod
-    def build_compute_service(attributes, service_endpoint, template_id):
+    def build_compute_service(attributes, service_endpoint):
         """
         Build an authorization service.
 
         :param attributes: attributes of compute service, dict
         :param service_endpoint: identifier of the service inside the asset DDO, str
-        :param template_id: hex str the ethereum smart contract address of the
-            service agreement template contract.
         :return: ServiceAgreement instance
         """
-        sla_template_dict = get_sla_template(ServiceTypes.CLOUD_COMPUTE)
-        sla_template = ServiceAgreementTemplate(
-            template_id, 'dataComputeServiceAgreement',
-            attributes['main']['creator'], sla_template_dict
-        )
         return ServiceAgreement(
             attributes,
-            sla_template,
             service_endpoint,
             ServiceTypes.CLOUD_COMPUTE,
             ServiceTypesIndices.DEFAULT_COMPUTING_INDEX

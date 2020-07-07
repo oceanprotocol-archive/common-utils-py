@@ -177,21 +177,14 @@ def test_service_factory():
 
     md_descriptor = ServiceDescriptor.metadata_service_descriptor(metadata, type_to_service[ServiceTypes.METADATA].service_endpoint)
     access_service = type_to_service[ServiceTypes.ASSET_ACCESS]
-    access_descriptor = ServiceDescriptor.access_service_descriptor(access_service.attributes, access_service.service_endpoint, access_service.template_id)
-    compute_descriptor = ServiceDescriptor.compute_service_descriptor(access_service.attributes, access_service.service_endpoint, access_service.template_id)
+    access_descriptor = ServiceDescriptor.access_service_descriptor(access_service.attributes, access_service.service_endpoint)
+    compute_descriptor = ServiceDescriptor.compute_service_descriptor(access_service.attributes, access_service.service_endpoint)
 
     services = ServiceFactory.build_services([md_descriptor, access_descriptor, compute_descriptor])
     assert len(services) == 3
     assert services[0].type == ServiceTypes.METADATA
     assert services[1].type == ServiceTypes.ASSET_ACCESS
     assert services[2].type == ServiceTypes.CLOUD_COMPUTE
-
-    keeper = Keeper.get_instance()
-    name_to_address = {name: i.address for name, i in keeper.contract_name_to_instance.items()}
-    s = services[1]
-    s.init_conditions_values(ddo.did, name_to_address)
-    s = services[2]
-    s.init_conditions_values(ddo.did, name_to_address)
 
     assert isinstance(services[1], ServiceAgreement)
     assert isinstance(services[2], ServiceAgreement)
