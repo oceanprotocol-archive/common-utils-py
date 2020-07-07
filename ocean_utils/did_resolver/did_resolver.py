@@ -5,7 +5,6 @@
 import logging
 
 from ocean_utils.aquarius.aquarius_provider import AquariusProvider
-from ocean_utils.did import did_to_id_bytes
 
 logger = logging.getLogger('keeper')
 
@@ -16,41 +15,27 @@ class DIDResolver:
     Resolve DID to a URL/DDO.
     """
 
-    def __init__(self, did_registry):
-        self._did_registry = did_registry
+    def __init__(self, data_token):
+        self._data_token = data_token
 
-    def resolve(self, did):
+    def resolve_asset(self, did, metadata_store_url=None, token_address=None):
         """
         Resolve a DID to an URL/DDO or later an internal/external DID.
 
-        :param did: 32 byte value or DID string to resolver, this is part of the ocean
+        :param did: the asset id to resolve, this is part of the ocean
             DID did:op:<32 byte value>
-        :return string: URL or DDO of the resolved DID
+        :param metadata_store_url: str the url of the metadata store
+        :param token_address: str the address of the DataToken smart contract
+
+        :return string: DDO of the resolved DID
         :return None: if the DID cannot be resolved
-        :raises ValueError: if did is invalid
-        :raises TypeError: if did has invalid format
-        :raises TypeError: on non 32byte value as the DID
-        :raises TypeError: on any of the resolved values are not string/DID bytes.
         :raises OceanDIDNotFound: if no DID can be found to resolve.
         """
+        assert metadata_store_url or token_address, f'One of metadata_store_url or token_address is required.'
 
-        did_bytes = did_to_id_bytes(did)
-        if not isinstance(did_bytes, bytes):
-            raise TypeError('Invalid did: a 32 Byte DID value required.')
+        metadata_url = metadata_store_url
+        if not metadata_store_url and token_address:
+            metadata_url = self.data_token(token_address).get_metadata_url()
 
-        # resolve a DID to a DDO
-        url = self.get_resolve_url(did_bytes)
-        logger.debug(f'found did {did} -> url={url}')
-        return AquariusProvider.get_aquarius(url).get_asset_ddo(did)
-
-    def get_resolve_url(self, did_bytes):
-        """Return a did value and value type from the block chain event record using 'did'.
-
-        :param did_bytes: DID, hex-str
-        :return url: Url, str
-        """
-        data = self._did_registry.get_registered_attribute(did_bytes)
-        if not (data and data.get('value')):
-            return None
-
-        return data['value']
+        logger.debug(f'found did {did} -> url={metadata_url}')
+        return AquariusProvider.get_aquarius(metadata_url).get_asset_ddo(did)
