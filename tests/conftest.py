@@ -3,10 +3,9 @@
 import os
 
 import pytest
-from ocean_keeper.contract_handler import ContractHandler
-from ocean_keeper.keeper import Keeper
+from ocean_keeper.web3.http_provider import CustomHTTPProvider
 from ocean_keeper.web3_provider import Web3Provider
-from web3 import HTTPProvider, Web3
+from web3 import HTTPProvider, Web3, WebsocketProvider
 
 from ocean_utils.agreements.service_agreement import ServiceAgreement, ServiceTypes
 from ocean_utils.aquarius import AquariusProvider
@@ -29,14 +28,20 @@ def get_aquarius_url():
 def get_keeper_url():
     if os.getenv('KEEPER_URL'):
         return os.getenv('KEEPER_URL')
-    return 'http://localhost:8545'
+    return os.environ.get('ETH_NETWORK', 'http://localhost:8545')
 
 
 @pytest.fixture(autouse=True)
 def setup_all():
-    Web3Provider.init_web3('http://localhost:8545')
-    ContractHandler.set_artifacts_path(os.path.expanduser('~/.ocean/keeper-contracts/artifacts'))
-    Keeper.get_instance()
+    network = get_keeper_url()
+    provider = CustomHTTPProvider
+    if network.startswith('wss'):
+        provider = WebsocketProvider
+
+    Web3Provider.init_web3(provider=provider(network))
+    if 'rinkeby' in network:
+        from web3.middleware import geth_poa_middleware
+        Web3Provider.get_web3().middleware_stack.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture
@@ -73,36 +78,17 @@ def metadata():
 def setup_agreements_environment():
     consumer_acc = get_consumer_account()
     publisher_acc = get_publisher_account()
-    keeper = Keeper.get_instance()
 
     ddo = get_ddo_sample()
     ddo._did = DID.did({"0": "0x12341234"})
-    keeper.did_registry.register(
-        ddo.asset_id,
-        checksum=Web3Provider.get_web3().toBytes(hexstr=ddo.asset_id),
-        url='aquarius:5000',
-        account=publisher_acc,
-        providers=None
-    )
 
     registered_ddo = ddo
     asset_id = registered_ddo.asset_id
     service_agreement = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
-    agreement_id = ServiceAgreement.create_new_agreement_id()
-    price = service_agreement.get_price()
-    (lock_cond_id,
-     access_cond_id,
-     escrow_cond_id) = service_agreement.generate_agreement_condition_ids(
-            agreement_id, asset_id, consumer_acc.address, publisher_acc.address, keeper
-    )
 
     return (
-        keeper,
         publisher_acc,
         consumer_acc,
-        agreement_id,
         asset_id,
-        price,
-        service_agreement,
-        (lock_cond_id, access_cond_id, escrow_cond_id),
+        service_agreement
     )

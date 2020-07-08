@@ -35,7 +35,7 @@ class DIDResolver:
 
         metadata_url = metadata_store_url
         if not metadata_store_url and token_address:
-            metadata_url = self.data_token(token_address).get_metadata_url()
+            metadata_url = self._data_token(token_address).get_metadata_url()
 
         logger.debug(f'found did {did} -> url={metadata_url}')
         return AquariusProvider.get_aquarius(metadata_url).get_asset_ddo(did)

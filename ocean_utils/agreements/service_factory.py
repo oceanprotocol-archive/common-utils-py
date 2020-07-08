@@ -34,7 +34,7 @@ class ServiceDescriptor(object):
                 {'attributes': {'main': {}}, 'serviceEndpoint': service_endpoint})
 
     @staticmethod
-    def access_service_descriptor(attributes, service_endpoint, template_id):
+    def access_service_descriptor(attributes, service_endpoint):
         """
         Access service descriptor.
 
@@ -46,12 +46,11 @@ class ServiceDescriptor(object):
         return (
             ServiceTypes.ASSET_ACCESS,
             {'attributes': attributes,
-             'serviceEndpoint': service_endpoint,
-             'templateId': template_id}
+             'serviceEndpoint': service_endpoint}
         )
 
     @staticmethod
-    def compute_service_descriptor(attributes, service_endpoint, template_id):
+    def compute_service_descriptor(attributes, service_endpoint):
         """
         Compute service descriptor.
 
@@ -63,8 +62,7 @@ class ServiceDescriptor(object):
         return (
             ServiceTypes.CLOUD_COMPUTE,
             {'attributes': attributes,
-             'serviceEndpoint': service_endpoint,
-             'templateId': template_id}
+             'serviceEndpoint': service_endpoint}
         )
 
 

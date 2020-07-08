@@ -7,6 +7,7 @@
   "created": "2019-02-08T08:13:49Z",
   "updated": "2019-03-08T08:13:49Z",
   "id": "did:op:0c184915b07b44c888d468be85a9b28253e80070e5294b1aaed81c2f0264e430",
+  "dataToken": "0x01111111",
   "proof": {
     "created": "2019-02-08T08:13:41Z",
     "creator": "0x37BB53e3d293494DE59fBe1FF78500423dcFd43B",
@@ -128,7 +129,7 @@
           "name": "dataAssetAccessServiceAgreement",
           "creator": "",
           "datePublished": "2019-02-08T08:13:49Z",
-          "cost": "10",
+          "cost": "19",
           "timeout": 36000
         },
         "additionalInformation": {
