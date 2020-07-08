@@ -72,23 +72,3 @@ def web3_instance():
 @pytest.fixture
 def metadata():
     return get_metadata()
-
-
-@pytest.fixture
-def setup_agreements_environment():
-    consumer_acc = get_consumer_account()
-    publisher_acc = get_publisher_account()
-
-    ddo = get_ddo_sample()
-    ddo._did = DID.did({"0": "0x12341234"})
-
-    registered_ddo = ddo
-    asset_id = registered_ddo.asset_id
-    service_agreement = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
-
-    return (
-        publisher_acc,
-        consumer_acc,
-        asset_id,
-        service_agreement
-    )
