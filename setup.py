@@ -20,7 +20,7 @@ with open('CHANGELOG.md') as history_file:
 # Installed by pip install ocean-utils
 # or pip install -e .
 install_requirements = [
-    'requests==2.21.0',
+    'requests>=2.21.0',
 ]
 
 # Required to run setup.py:
